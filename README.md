@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.5.2.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.5.3.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,22 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.5.3：清场改为“摘 AI + 注销 + 隐藏”
+
+0.5.2 的日志显示 `AIs 1 -> 0`，`Dispose` 确实清了静态 AI；但紧接着 `ExitEditor` 里出现
+`VehicleRegister.Register` NRE 和 `Failed to enable vehicle behaviour: Already enabled`——
+在编辑器里销毁载具把 VehicleRegister 弄脏了，并影响了玩家设计的重建。
+
+0.5.3 不再调用工厂销毁，而是按游戏 `VehicleAIAssemblyStage.Release()` 的顺序手工清理：
+
+1. 从静态 `AIRegister` 里找到属于本车的 `CommanderAI`，先
+   `AvoidanceEntityRegister.Deregister(avoidanceID)`，再 `AIRegister.Deregister(ai)`，
+   最后调用 `CommanderAI.Release()`；
+2. `VehicleRegister.Deregister(vehicle)`；
+3. `gameObject.SetActive(false)`。
+
+完全不碰工厂/共享 baked mesh，也不在编辑器重建期间销毁任何东西。
 
 ## 0.5.2：修复“下一局履带消失、无法操控”
 

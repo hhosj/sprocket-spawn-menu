@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.3
+- 清场不再调用 `VehicleSpawn.Dispose()`（会在编辑器重建玩家设计时弄脏 VehicleRegister）。
+- 改为手工：从静态 `AIRegister`/`AvoidanceEntityRegister` 摘除本车 AI → `VehicleRegister.Deregister`
+  → `SetActive(false)`；顺序与 `VehicleAIAssemblyStage.Release()` 一致。
+
+
 ## 0.5.2
 - 修复清场后 `AIRegister.Update` 每帧 NRE（下一局履带消失、无法操控）：
   改为只走游戏自己的 `VehicleSpawn.Dispose()`，让 `VehicleAIAssemblyStage.Release()` 把 AI

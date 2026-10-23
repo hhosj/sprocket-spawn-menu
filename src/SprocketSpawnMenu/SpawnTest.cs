@@ -199,7 +199,7 @@ internal static class SpawnTest
     {
         if (Spawned.Count == 0) return;
 
-        Log($"[cleanup] {reason}: {(dispose ? "disposing" : "forgetting")} {Spawned.Count} spawned vehicle(s)");
+        Log($"[cleanup] {reason}: {(dispose ? "cleaning" : "forgetting")} {Spawned.Count} spawned vehicle(s)");
 
         if (!dispose)
         {
@@ -211,32 +211,154 @@ internal static class SpawnTest
             return;
         }
 
-        var aisBefore = CountAIs();
-
         foreach (var spawn in Spawned)
         {
             try
             {
-                // Use the game's own disposal path. VehicleSpawn.Dispose() -> factory.Destroy()
-                // is what StageVehicleSpawnEvent uses, and it also removes the vehicle's AIs
-                // from the STATIC AIRegister/AvoidanceEntityRegister. Deactivating the GameObject
-                // or manually deregistering first leaves those static entries behind, which then
-                // throw every frame in AIRegister.Update (and look like missing tracks / loss of
-                // control in the next match).
-                spawn.Dispose();
+                var vehicle = spawn.Vehicle;
+                var root = GetVehicleTransform(vehicle);
+
+                // Order matters:
+                //  1) remove the vehicle's AI from the STATIC AIRegister / AvoidanceEntityRegister;
+                //  2) remove it from VehicleRegister;
+                //  3) hide the GameObject.
+                // Do NOT call VehicleSpawn.Dispose()/factory.Destroy() here: the editor rebuilds
+                // the player's design right after this, and destroying a spawned vehicle at that
+                // point corrupts that rebuild (tracks/controls) and leaves the register dirty.
+                if (root != null) RemoveAIsFor(root);
+
+                try { _register?.Deregister(vehicle); }
+                catch { /* may already be gone */ }
+
+                if (root != null) root.gameObject.SetActive(false);
             }
             catch (Exception e)
             {
-                LogWarning($"[cleanup] one vehicle could not be disposed: {e.GetType().Name}");
+                LogWarning($"[cleanup] one vehicle could not be cleaned: {e.GetType().Name}");
             }
         }
 
-        var aisAfter = CountAIs();
         Spawned.Clear();
         _trackedTransform = null;
         _spawnResult = null;
         _registerCountBefore = _register?.TotalRegisteredCount ?? -1;
-        Log($"[cleanup] done (AIs {aisBefore} -> {aisAfter})");
+        Log("[cleanup] done");
+    }
+
+    private static void RemoveAIsFor(Transform vehicleRoot)
+    {
+        try
+        {
+            var rootPointer = ((Il2CppObjectBase)vehicleRoot).Pointer;
+
+            var registerType = Interop.FindType("Sprocket.ArtificialIntelligence.AIRegister");
+            if (registerType == null) return;
+
+            var list = GetAIRegisterList(registerType);
+            if (list == null)
+            {
+                LogWarning("AIRegister list unavailable; AIs of this vehicle may keep ticking.");
+                return;
+            }
+
+            var listType = list.GetType();
+            var countMember = (MemberInfo)listType.GetProperty("Count", Interop.InstanceAny)
+                              ?? listType.GetMethod("get_Count", Interop.InstanceAny);
+            var itemMethod = listType.GetMethod("get_Item", Interop.InstanceAny);
+            var deregister = registerType.GetMethod("Deregister", Interop.StaticAny);
+
+            if (countMember == null || itemMethod == null || deregister == null)
+            {
+                LogWarning("AIRegister shape not understood; falling back to AIRegister.Clear().");
+                registerType.GetMethod("Clear", Interop.StaticAny)?.Invoke(null, null);
+                return;
+            }
+
+            var count = (int)ReadMember(countMember, list);
+            var removed = 0;
+
+            for (var i = count - 1; i >= 0; i--)
+            {
+                var ai = itemMethod.Invoke(list, new object[] { i });
+                if (ai == null) continue;
+                if (GetAIRootPointer(ai) != rootPointer) continue;
+
+                RemoveAvoidanceFor(ai);
+                deregister.Invoke(null, new[] { ai });
+
+                // Same order as VehicleAIAssemblyStage.Release(): remove from AIRegister, then
+                // let CommanderAI cancel its tasks / release the driver.
+                try { ai.GetType().GetMethod("Release", Interop.InstanceAny)?.Invoke(ai, null); }
+                catch { /* best effort */ }
+
+                removed++;
+            }
+
+            if (removed > 0) Log($"[cleanup] removed {removed} AI(s) from the static AIRegister");
+        }
+        catch (Exception e)
+        {
+            LogWarning($"AI cleanup failed: {e.GetType().Name}: {e.Message}");
+        }
+    }
+
+    private static object GetAIRegisterList(Type registerType)
+    {
+        if (Interop.TryGetValue(registerType, null, "register", out var field) && field != null)
+            return field;
+
+        var getter = registerType.GetMethod("get_RegisteredAIs", Interop.StaticAny);
+        return getter?.Invoke(null, null);
+    }
+
+    private static IntPtr GetAIRootPointer(object ai)
+    {
+        if (Interop.TryGetValue(ai.GetType(), ai, "observerTransform", out var observer) &&
+            observer is Transform observerTransform)
+        {
+            return ((Il2CppObjectBase)observerTransform.root).Pointer;
+        }
+
+        if (Interop.TryGetValue(ai.GetType(), ai, "controlTarget", out var target) &&
+            target is Il2CppObjectBase proxy)
+        {
+            var behaviour = proxy.TryCast<Sprocket.Vehicles.Control.IAIControllableVehicle>();
+            if (behaviour != null) return ((Il2CppObjectBase)behaviour.transform.root).Pointer;
+        }
+
+        return IntPtr.Zero;
+    }
+
+    private static void RemoveAvoidanceFor(object ai)
+    {
+        try
+        {
+            if (!Interop.TryGetValue(ai.GetType(), ai, "driver", out var driver) || driver == null)
+                return;
+
+            if (!Interop.TryGetValue(driver.GetType(), driver, "avoidanceID", out var raw) ||
+                !(raw is int avoidanceId))
+                return;
+
+            var avoidanceType = Interop.FindType(
+                "Sprocket.ArtificialIntelligence.AvoidanceEntityRegister");
+            avoidanceType?.GetMethod("Deregister", Interop.StaticAny)
+                ?.Invoke(null, new object[] { avoidanceId });
+        }
+        catch
+        {
+            // best effort; the AI itself is removed either way
+        }
+    }
+
+    private static object ReadMember(MemberInfo member, object instance)
+    {
+        switch (member)
+        {
+            case PropertyInfo property: return property.GetValue(instance);
+            case MethodInfo method: return method.Invoke(instance, null);
+            default: return null;
+        }
     }
 
     internal static void Track()
