@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.5.7.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.5.8.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,16 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.5.8：离场时清空静态 AIRegister
+
+0.5.7 的 `[cleanup] match exit` 确实执行了，但异常变成 `FlankTargetTask.Update → AIRegister.Update`：
+离开对局时，静态 `AIRegister` 里还留着 AI（包括地图靶车），它们的 target 已随场景销毁，
+下一局每帧 NRE。
+
+0.5.8 在 `CleanupForSceneExit`（`GameController.Release`，场景卸载前）里，除了 Dispose 本模组
+生成的车，还调用 `AIRegister.Clear()` 并按 `AvoidanceEntityRegister.nextID` 清空 avoidance 槽位。
+离开一局清空是安全的，新一局会重新注册。
 
 ## 0.5.7：只在离场时清理
 

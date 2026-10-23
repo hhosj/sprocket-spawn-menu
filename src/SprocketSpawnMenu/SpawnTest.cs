@@ -193,7 +193,16 @@ internal static class SpawnTest
         return -1;
     }
 
-    internal static void CleanupForSceneExit() => ClearSpawned("match exit");
+    internal static void CleanupForSceneExit()
+    {
+        ClearSpawned("match exit");
+
+        // Leaving a match must also wipe the STATIC AI registry: AIs (including the map's own
+        // targets) keep DriverAI tasks whose target vehicles are destroyed by the scene unload,
+        // and AIRegister.Update then throws every frame in the next scene.
+        var registerType = Interop.FindType("Sprocket.ArtificialIntelligence.AIRegister");
+        if (registerType != null) ClearAllAIs(registerType);
+    }
 
     private static void ClearSpawned(string reason, bool dispose = true)
     {

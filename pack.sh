@@ -3,7 +3,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VERSION="0.5.7"
+VERSION="0.5.8"
 NAME="Sprocket.SpawnMenu"
 OUT="$HERE/release"
 DLL="$OUT/$NAME.dll"
