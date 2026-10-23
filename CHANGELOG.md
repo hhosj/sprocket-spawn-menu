@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.5
+- 清场顺序改为 `VehicleSpawn.Dispose()` → `VehicleRegister.Deregister()`：
+  前者释放 AIRegister/Avoidance/RotationAxisPhysics 等静态注册表，后者清掉残留的载具注册项。
+- 去掉手工 AI 摘除/兜底清空（会误伤其它 AI，且清不干净静态物理注册表）。
+
+
 ## 0.5.4
 - AI 按根节点匹配失败时兜底 `AIRegister.Clear()` + 清 avoidance 槽位，避免静态 AI 每帧 NRE。
 - 代价：该次切换会停掉所有 AI；新一局重新注册。

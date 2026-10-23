@@ -199,7 +199,7 @@ internal static class SpawnTest
     {
         if (Spawned.Count == 0) return;
 
-        Log($"[cleanup] {reason}: {(dispose ? "cleaning" : "forgetting")} {Spawned.Count} spawned vehicle(s)");
+        Log($"[cleanup] {reason}: {(dispose ? "disposing" : "forgetting")} {Spawned.Count} spawned vehicle(s)");
 
         if (!dispose)
         {
@@ -216,25 +216,20 @@ internal static class SpawnTest
             try
             {
                 var vehicle = spawn.Vehicle;
-                var root = GetVehicleTransform(vehicle);
 
-                // Order matters:
-                //  1) remove the vehicle's AI from the STATIC AIRegister / AvoidanceEntityRegister;
-                //  2) remove it from VehicleRegister;
-                //  3) hide the GameObject.
-                // Do NOT call VehicleSpawn.Dispose()/factory.Destroy() here: the editor rebuilds
-                // the player's design right after this, and destroying a spawned vehicle at that
-                // point corrupts that rebuild (tracks/controls) and leaves the register dirty.
-                if (root != null) RemoveAIsFor(root);
+                // Order matters: VehicleSpawn.Dispose() -> factory.Destroy() is the only path that
+                // releases ALL static registries this game uses (AIRegister, AvoidanceEntityRegister,
+                // RotationAxisPhysicsRegister, ...). Doing the VehicleRegister.Deregister() first
+                // makes that cleanup skip work, and doing only Dispose leaves a dirty entry in
+                // VehicleRegister that breaks ExitEditor. So: Dispose first, Deregister second.
+                spawn.Dispose();
 
                 try { _register?.Deregister(vehicle); }
-                catch { /* may already be gone */ }
-
-                if (root != null) root.gameObject.SetActive(false);
+                catch { /* already removed by Dispose */ }
             }
             catch (Exception e)
             {
-                LogWarning($"[cleanup] one vehicle could not be cleaned: {e.GetType().Name}");
+                LogWarning($"[cleanup] one vehicle could not be disposed: {e.GetType().Name}");
             }
         }
 
