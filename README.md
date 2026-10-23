@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.5.6.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.5.7.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,19 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.5.7：只在离场时清理
+
+反馈指出：沙盒 → 对局正常，**对局 → 主菜单 → 沙盒**才坏。也就是说问题出在离开一局时：
+生成的坦克随场景卸载，但静态注册表（AI/avoidance/RotationAxisPhysics）没清，进沙盒后继续 tick
+已销毁对象。
+
+0.5.7 的策略：
+
+- `CleanupOnMatchExit = true`（默认）：在 `GameController.Release` 里、场景卸载前
+  `VehicleSpawn.Dispose()` → `VehicleRegister.Deregister()`，清掉静态注册项；
+- `ClearOnEditorReturn = false`（保持关闭）：编辑器往返仍不销毁，避免 0.5.2 的重建问题；
+- 代价：回编辑器时生成的坦克会留在原地，直到你离开这一局。
 
 ## 0.5.6：自动清理默认关闭（止损）
 
@@ -159,7 +172,7 @@ Mod Manager 是 Windows 专用；Linux 手动装：
 | `[Spawn] FacingOffsetDegrees` | `0` | 车头反了设 `180` |
 | `[Spawn] CreateSpawnerIfMissing` | `true` | 场景没有生成点时自建 |
 | `[Spawn] ClearOnEditorReturn` | `false` | 实验性：回编辑器时清理（可能破坏静态注册表） |
-| `[Spawn] CleanupOnMatchExit` | `false` | 实验性：离场时清理 |
+| `[Spawn] CleanupOnMatchExit` | `true` | 离场（回主菜单）时清理生成的坦克 |
 | `[Keys] UiToggleKey` | `B` | 面板显示/隐藏 |
 | `[Keys] NextBlueprintKey` | `]` | 下一辆 |
 | `[Keys] PrevBlueprintKey` | `[` | 上一辆 |

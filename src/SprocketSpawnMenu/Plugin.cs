@@ -23,7 +23,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
 {
     public const string PluginGuid = "sprocket.spawn.menu";
     public const string PluginName = "Sprocket Spawn Menu";
-    public const string PluginVersion = "0.5.6";
+    public const string PluginVersion = "0.5.7";
 
     internal static ManualLogSource Logger;
 
@@ -184,9 +184,10 @@ public sealed class SpawnMenuPlugin : BasePlugin
             "after mode switches; keep it off unless you want to test cleanup.");
 
         CfgCleanupOnMatchExit = Config.Bind(
-            "Spawn", "CleanupOnMatchExit", false,
-            "EXPERIMENTAL. Run the same cleanup when leaving a match. Off by default for the " +
-            "same reason as ClearOnEditorReturn.");
+            "Spawn", "CleanupOnMatchExit", true,
+            "Dispose spawned vehicles when leaving a match (GameController.Release), before the " +
+            "scene unloads. This is what keeps the static AI/physics registries clean when going " +
+            "back to the main menu.");
 
         if (CfgConfigVersion.Value < 5)
         {
@@ -200,9 +201,15 @@ public sealed class SpawnMenuPlugin : BasePlugin
         if (CfgConfigVersion.Value < 7)
         {
             CfgClearOnEditorReturn.Value = false;
-            CfgCleanupOnMatchExit.Value = false;
             CfgConfigVersion.Value = 7;
-            Logger.LogInfo("[config] migrated to v7: automatic cleanup disabled by default.");
+            Logger.LogInfo("[config] migrated to v7: editor cleanup disabled by default.");
+        }
+
+        if (CfgConfigVersion.Value < 8)
+        {
+            CfgCleanupOnMatchExit.Value = true;
+            CfgConfigVersion.Value = 8;
+            Logger.LogInfo("[config] migrated to v8: cleanup on match exit enabled.");
         }
 
         if (CfgConfigVersion.Value < 6)

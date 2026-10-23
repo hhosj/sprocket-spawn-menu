@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.7
+- `CleanupOnMatchExit` 默认开启：在 `GameController.Release`（离场、场景卸载前）
+  `Dispose` + `Deregister`，清理静态 AI/avoidance/RotationAxisPhysics 注册项。
+- 编辑器清理保持关闭，避免编辑器重建时弄脏 VehicleRegister。
+
+
 ## 0.5.6
 - 自动清理（回编辑器/离场）默认关闭：清理会触碰 Sprocket 的静态注册表，
   曾导致切换对局后无法操控。生成的坦克会留在场景里，但不再破坏游戏状态。
