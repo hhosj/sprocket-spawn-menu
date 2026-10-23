@@ -95,6 +95,7 @@ internal static class SpawnTest
                         SnapToGround(root, _spawnGroundY);
                         EnablePhysics(root);
                         StartTracking(result, root);
+                        SetOurAIEnabled(root);
                     }
                 }
 
@@ -254,6 +255,75 @@ internal static class SpawnTest
         _spawnResult = null;
         _registerCountBefore = _register?.TotalRegisteredCount ?? -1;
         Log("[cleanup] done");
+    }
+
+    private static void SetOurAIEnabled(Transform vehicleRoot)
+    {
+        try
+        {
+            var registerType = Interop.FindType("Sprocket.ArtificialIntelligence.AIRegister");
+            if (registerType == null) return;
+
+            var list = GetAIRegisterList(registerType);
+            if (list == null)
+            {
+                LogWarning("AIRegister list unavailable; spawned AI may stay idle until reset.");
+                return;
+            }
+
+            var listType = list.GetType();
+            var countMember = (MemberInfo)listType.GetProperty("Count", Interop.InstanceAny)
+                              ?? listType.GetMethod("get_Count", Interop.InstanceAny);
+            var itemMethod = listType.GetMethod("get_Item", Interop.InstanceAny);
+            if (countMember == null || itemMethod == null) return;
+
+            var team = (int)(1 << (SpawnMenuPlugin.CfgTeam.Value - 1));
+            var count = (int)ReadMember(countMember, list);
+            var enabled = 0;
+
+            for (var i = 0; i < count; i++)
+            {
+                var ai = itemMethod.Invoke(list, new object[] { i });
+                if (ai == null) continue;
+                if (!IsOurAI(ai, vehicleRoot) && GetAITeam(ai) != team) continue;
+
+                var enabledProperty = ai.GetType().GetProperty("Enabled", Interop.InstanceAny);
+                if (enabledProperty == null || !enabledProperty.CanWrite) continue;
+
+                enabledProperty.SetValue(ai, true);
+                enabled++;
+            }
+
+            Log($"[spawn] AI enabled for {enabled} commander(s) on the spawned vehicle");
+        }
+        catch (Exception e)
+        {
+            LogWarning($"enabling spawned AI failed: {e.GetType().Name}: {e.Message}");
+        }
+    }
+
+    private static int GetAITeam(object ai)
+    {
+        try
+        {
+            if (!Interop.TryGetValue(ai.GetType(), ai, "controlTarget", out var target) ||
+                !(target is Il2CppObjectBase proxy))
+                return -1;
+
+            var behaviour = proxy.TryCast<Sprocket.Vehicles.Control.IAIControllableVehicle>();
+            if (behaviour == null) return -1;
+
+            if (!Interop.TryGetValue(behaviour.GetType(), behaviour, "ID", out var id) || id == null)
+                return -1;
+
+            if (Interop.TryGetValue(id.GetType(), id, "TeamID", out var team)) return Convert.ToInt32(team);
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return -1;
     }
 
     private static void RemoveAIsFor(Transform vehicleRoot)

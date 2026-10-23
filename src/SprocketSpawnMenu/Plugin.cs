@@ -23,7 +23,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
 {
     public const string PluginGuid = "sprocket.spawn.menu";
     public const string PluginName = "Sprocket Spawn Menu";
-    public const string PluginVersion = "0.5.9";
+    public const string PluginVersion = "0.6.0";
 
     internal static ManualLogSource Logger;
 
@@ -178,10 +178,9 @@ public sealed class SpawnMenuPlugin : BasePlugin
             "If the scene has no VehicleSpawner, create one on a new GameObject and spawn through it.");
 
         CfgClearOnEditorReturn = Config.Bind(
-            "Spawn", "ClearOnEditorReturn", false,
-            "EXPERIMENTAL. Dispose spawned vehicles when returning to the vehicle editor. " +
-            "This touches Sprocket's static AI/physics registries and has caused broken vehicles " +
-            "after mode switches; keep it off unless you want to test cleanup.");
+            "Spawn", "ClearOnEditorReturn", true,
+            "Dispose spawned vehicles when returning to the vehicle editor. Uses the same " +
+            "Dispose -> Deregister order that is verified for battle reset.");
 
         CfgCleanupOnMatchExit = Config.Bind(
             "Spawn", "CleanupOnMatchExit", true,
@@ -203,6 +202,13 @@ public sealed class SpawnMenuPlugin : BasePlugin
             CfgClearOnEditorReturn.Value = false;
             CfgConfigVersion.Value = 7;
             Logger.LogInfo("[config] migrated to v7: editor cleanup disabled by default.");
+        }
+
+        if (CfgConfigVersion.Value < 9)
+        {
+            CfgClearOnEditorReturn.Value = true;
+            CfgConfigVersion.Value = 9;
+            Logger.LogInfo("[config] migrated to v9: cleanup on editor return enabled.");
         }
 
         if (CfgConfigVersion.Value < 8)

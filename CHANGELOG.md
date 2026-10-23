@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0
+- `ClearOnEditorReturn` 默认开启（Dispose → Deregister，与重置战局相同的已验证顺序）。
+- 生成后把本车 CommanderAI 的 `Enabled` 设为 true，AI 立即行动，不再等重置战局。
+
+
 ## 0.5.9
 - 给 `DeathmatchGameMode.ResetGame` 加前缀：重置战局前 Dispose + Deregister 本模组生成的车，
   避免它们留到重置后并获得 AI 行为、最终破坏操控。

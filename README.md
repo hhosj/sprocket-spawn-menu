@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.5.9.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.6.0.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,12 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.6.0：回编辑器清理 + 生成即启用 AI
+
+- `ClearOnEditorReturn` 默认重新打开：回编辑器时按已验证的 `Dispose → Deregister` 顺序清理；
+- 生成完成后在静态 `AIRegister` 里找到本车的 `CommanderAI`，把 `Enabled = true`，让 AI 立即开始
+  （之前要等重置战局才会被激活）。日志会打 `[spawn] AI enabled for N commander(s)`。
 
 ## 0.5.9：重置战局前清理
 
