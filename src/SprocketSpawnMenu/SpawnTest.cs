@@ -160,13 +160,46 @@ internal static class SpawnTest
         }
     }
 
+    private static int CountAIs()
+    {
+        try
+        {
+            var registerType = Interop.FindType("Sprocket.ArtificialIntelligence.AIRegister");
+            if (registerType == null) return -1;
+
+            object list = null;
+
+            if (Interop.TryGetValue(registerType, null, "register", out var field)) list = field;
+            if (list == null)
+            {
+                var getter = registerType.GetMethod("get_RegisteredAIs", Interop.StaticAny);
+                list = getter?.Invoke(null, null);
+            }
+
+            if (list == null) return -1;
+
+            var listType = list.GetType();
+            var countProperty = listType.GetProperty("Count", Interop.InstanceAny);
+            if (countProperty != null) return (int)countProperty.GetValue(list);
+
+            var getCount = listType.GetMethod("get_Count", Interop.InstanceAny);
+            if (getCount != null) return (int)getCount.Invoke(list, null);
+        }
+        catch
+        {
+            // best effort only
+        }
+
+        return -1;
+    }
+
     internal static void CleanupForSceneExit() => ClearSpawned("match exit");
 
     private static void ClearSpawned(string reason, bool dispose = true)
     {
         if (Spawned.Count == 0) return;
 
-        Log($"[cleanup] {reason}: {(dispose ? "deactivating" : "forgetting")} {Spawned.Count} spawned vehicle(s)");
+        Log($"[cleanup] {reason}: {(dispose ? "disposing" : "forgetting")} {Spawned.Count} spawned vehicle(s)");
 
         if (!dispose)
         {
@@ -178,32 +211,32 @@ internal static class SpawnTest
             return;
         }
 
+        var aisBefore = CountAIs();
+
         foreach (var spawn in Spawned)
         {
             try
             {
-                var vehicle = spawn.Vehicle;
-
-                // Do NOT call VehicleSpawn.Dispose()/factory.Destroy() here: that path releases
-                // baked meshes, and Sprocket shares those meshes between vehicles. Releasing a
-                // spawned tank could leave the next match's tracks invisible/unusable.
-                try { _register?.Deregister(vehicle); }
-                catch { /* may already be gone */ }
-
-                var root = GetVehicleTransform(vehicle);
-                if (root != null) root.gameObject.SetActive(false);
+                // Use the game's own disposal path. VehicleSpawn.Dispose() -> factory.Destroy()
+                // is what StageVehicleSpawnEvent uses, and it also removes the vehicle's AIs
+                // from the STATIC AIRegister/AvoidanceEntityRegister. Deactivating the GameObject
+                // or manually deregistering first leaves those static entries behind, which then
+                // throw every frame in AIRegister.Update (and look like missing tracks / loss of
+                // control in the next match).
+                spawn.Dispose();
             }
             catch (Exception e)
             {
-                LogWarning($"[cleanup] one vehicle could not be hidden: {e.GetType().Name}");
+                LogWarning($"[cleanup] one vehicle could not be disposed: {e.GetType().Name}");
             }
         }
 
+        var aisAfter = CountAIs();
         Spawned.Clear();
         _trackedTransform = null;
         _spawnResult = null;
         _registerCountBefore = _register?.TotalRegisteredCount ?? -1;
-        Log("[cleanup] done");
+        Log($"[cleanup] done (AIs {aisBefore} -> {aisAfter})");
     }
 
     internal static void Track()

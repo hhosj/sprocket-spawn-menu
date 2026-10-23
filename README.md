@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.5.1.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.5.2.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,18 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.5.2：修复“下一局履带消失、无法操控”
+
+0.5.1 的日志里，清场后每帧都在 `AIRegister.Update → DriverAI.Step → AvoidanceEntityRegister.Spherecast`
+抛 `NullReferenceException`（6 万行日志里 1.3 万次）。`AIRegister` 是**静态**的，我们只把车隐藏并从
+`VehicleRegister` 注销，AI 实体没从静态 `AIRegister`/`AvoidanceEntityRegister` 移除，下一局还在 tick
+已经销毁的对象，于是履带不更新、操控失效。
+
+0.5.2 改为**只调用游戏自己的 `VehicleSpawn.Dispose()`**（`StageVehicleSpawnEvent` 的清理路径），
+不再先手动 `Deregister`、也不再 `SetActive(false)`；这条路径会走
+`VehicleAIAssemblyStage.Release()` 把 AI 从 `AIRegister` 里移除。日志会打
+`[cleanup] done (AIs N -> M)`，可以直接确认 AI 数量有没有降下去。
 
 ## 0.5.1：修复“下一局履带消失、无法操控”
 

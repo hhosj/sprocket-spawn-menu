@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.2
+- 修复清场后 `AIRegister.Update` 每帧 NRE（下一局履带消失、无法操控）：
+  改为只走游戏自己的 `VehicleSpawn.Dispose()`，让 `VehicleAIAssemblyStage.Release()` 把 AI
+  从静态 `AIRegister` 移除；不再手动 `Deregister` 或 `SetActive(false)`。
+- 清场日志增加 AI 数量变化。
+
+
 ## 0.5.1
 - 修复下一局履带消失/无法操控：清场不再调用 `VehicleSpawn.Dispose()`/`factory.Destroy()`
   （会释放跨载具共享的 baked mesh），改为 `Deregister` + `SetActive(false)`。
