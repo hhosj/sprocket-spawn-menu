@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.4
+- AI 按根节点匹配失败时兜底 `AIRegister.Clear()` + 清 avoidance 槽位，避免静态 AI 每帧 NRE。
+- 代价：该次切换会停掉所有 AI；新一局重新注册。
+
+
 ## 0.5.3
 - 清场不再调用 `VehicleSpawn.Dispose()`（会在编辑器重建玩家设计时弄脏 VehicleRegister）。
 - 改为手工：从静态 `AIRegister`/`AvoidanceEntityRegister` 摘除本车 AI → `VehicleRegister.Deregister`

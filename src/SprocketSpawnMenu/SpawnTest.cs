@@ -249,8 +249,6 @@ internal static class SpawnTest
     {
         try
         {
-            var rootPointer = ((Il2CppObjectBase)vehicleRoot).Pointer;
-
             var registerType = Interop.FindType("Sprocket.ArtificialIntelligence.AIRegister");
             if (registerType == null) return;
 
@@ -269,8 +267,7 @@ internal static class SpawnTest
 
             if (countMember == null || itemMethod == null || deregister == null)
             {
-                LogWarning("AIRegister shape not understood; falling back to AIRegister.Clear().");
-                registerType.GetMethod("Clear", Interop.StaticAny)?.Invoke(null, null);
+                ClearAllAIs(registerType);
                 return;
             }
 
@@ -281,24 +278,113 @@ internal static class SpawnTest
             {
                 var ai = itemMethod.Invoke(list, new object[] { i });
                 if (ai == null) continue;
-                if (GetAIRootPointer(ai) != rootPointer) continue;
+                if (!IsOurAI(ai, vehicleRoot)) continue;
 
                 RemoveAvoidanceFor(ai);
                 deregister.Invoke(null, new[] { ai });
 
-                // Same order as VehicleAIAssemblyStage.Release(): remove from AIRegister, then
-                // let CommanderAI cancel its tasks / release the driver.
                 try { ai.GetType().GetMethod("Release", Interop.InstanceAny)?.Invoke(ai, null); }
                 catch { /* best effort */ }
 
                 removed++;
             }
 
-            if (removed > 0) Log($"[cleanup] removed {removed} AI(s) from the static AIRegister");
+            if (removed > 0)
+            {
+                Log($"[cleanup] removed {removed} AI(s) from the static AIRegister");
+            }
+            else
+            {
+                // Matching failed (parenting/observer transform differs). Leaving the AI in the
+                // static register is worse than stopping all AI for this transition: it will
+                // tick a vehicle whose avoidance entity is gone and throw every frame.
+                ClearAllAIs(registerType);
+            }
         }
         catch (Exception e)
         {
             LogWarning($"AI cleanup failed: {e.GetType().Name}: {e.Message}");
+        }
+    }
+
+    private static bool IsOurAI(object ai, Transform vehicleRoot)
+    {
+        var transform = GetAITransform(ai);
+        if (transform == null) return false;
+
+        try
+        {
+            var aiPointer = ((Il2CppObjectBase)transform).Pointer;
+            var rootPointer = ((Il2CppObjectBase)vehicleRoot).Pointer;
+            if (aiPointer == rootPointer) return true;
+
+            if (transform.IsChildOf(vehicleRoot)) return true;
+            if (vehicleRoot.IsChildOf(transform)) return true;
+        }
+        catch
+        {
+            // ignore and treat as not ours
+        }
+
+        return false;
+    }
+
+    private static Transform GetAITransform(object ai)
+    {
+        try
+        {
+            if (Interop.TryGetValue(ai.GetType(), ai, "observerTransform", out var observer) &&
+                observer is Transform observerTransform)
+                return observerTransform;
+
+            if (Interop.TryGetValue(ai.GetType(), ai, "controlTarget", out var target) &&
+                target is Il2CppObjectBase proxy)
+            {
+                var behaviour = proxy.TryCast<Sprocket.Vehicles.Control.IAIControllableVehicle>();
+                if (behaviour != null) return behaviour.transform;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return null;
+    }
+
+    private static void ClearAllAIs(Type registerType)
+    {
+        try
+        {
+            registerType.GetMethod("Clear", Interop.StaticAny)?.Invoke(null, null);
+            LogWarning("[cleanup] no AI matched this vehicle; AIRegister.Clear() fallback used.");
+            ClearAllAvoidance();
+        }
+        catch (Exception e)
+        {
+            LogWarning($"AIRegister.Clear() failed: {e.GetType().Name}");
+        }
+    }
+
+    private static void ClearAllAvoidance()
+    {
+        try
+        {
+            var avoidanceType = Interop.FindType(
+                "Sprocket.ArtificialIntelligence.AvoidanceEntityRegister");
+            if (avoidanceType == null) return;
+
+            if (!Interop.TryGetValue(avoidanceType, null, "nextID", out var raw) || !(raw is int next))
+                return;
+
+            var deregister = avoidanceType.GetMethod("Deregister", Interop.StaticAny);
+            for (var i = 0; i < next; i++) deregister?.Invoke(null, new object[] { i });
+
+            Log($"[cleanup] cleared {next} avoidance entity slot(s)");
+        }
+        catch (Exception e)
+        {
+            LogWarning($"avoidance clear failed: {e.GetType().Name}");
         }
     }
 

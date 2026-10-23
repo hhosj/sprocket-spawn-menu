@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.5.3.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.5.4.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,16 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.5.4：AI 匹配失败时的兜底
+
+0.5.3 的日志里清场没有打出 `removed N AI(s)`——按车辆根节点匹配 `CommanderAI` 没匹配上，
+AI 还留在静态 `AIRegister`，而 `SetActive(false)` 清掉了它的 avoidance 实体，于是下一帧
+`Spherecast` 用旧 casterID 继续 NRE。
+
+0.5.4 在匹配失败时兜底调用 `AIRegister.Clear()`，并按 `AvoidanceEntityRegister.nextID`
+清掉 avoidance 槽位。代价是这一次切换会停掉**所有** AI（包括场景里原有的靶车），
+但保证不会再把静态注册表留脏；新一局会重新注册。
 
 ## 0.5.3：清场改为“摘 AI + 注销 + 隐藏”
 
