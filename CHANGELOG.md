@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2
+- 生成并注册后调用 `VehicleRegister.RebuildRegister()`，模拟重置战局对载具/AI 的重建，
+  让生成的车立即获得 AI 行为。
+- 补充 AIRegister 列表形状诊断日志。
+
+
 ## 0.6.1
 - 生成后每秒重试启用本车 CommanderAI（最多 10 次），并打印 AIRegister 实际数量，
   诊断“AI 延迟注册”还是“匹配失败”。

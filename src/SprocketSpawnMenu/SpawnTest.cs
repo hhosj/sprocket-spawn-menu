@@ -86,6 +86,7 @@ internal static class SpawnTest
                         $"BehaviourEnabled={SafeGet(vehicle, "BehaviourEnabled")}");
 
                     RegisterIfNeeded(vehicle);
+                    TryRebuildRegister();
 
                     var root = GetVehicleTransform(vehicle);
                     if (root == null)
@@ -323,7 +324,12 @@ internal static class SpawnTest
             var countMember = (MemberInfo)listType.GetProperty("Count", Interop.InstanceAny)
                               ?? listType.GetMethod("get_Count", Interop.InstanceAny);
             var itemMethod = listType.GetMethod("get_Item", Interop.InstanceAny);
-            if (countMember == null || itemMethod == null) return 0;
+            if (countMember == null || itemMethod == null)
+            {
+                LogWarning($"AIRegister list shape unknown (type={listType.FullName}, " +
+                           $"count={countMember != null}, item={itemMethod != null})");
+                return 0;
+            }
 
             var team = (int)(1 << (SpawnMenuPlugin.CfgTeam.Value - 1));
             var count = (int)ReadMember(countMember, list);
@@ -925,6 +931,19 @@ internal static class SpawnTest
         Log($"created spawner; default resources={resources}; override set={applied}");
 
         return spawner;
+    }
+
+    private static void TryRebuildRegister()
+    {
+        try
+        {
+            _register?.RebuildRegister();
+            Log("[spawn] VehicleRegister.RebuildRegister() called (may create/activate AI)");
+        }
+        catch (Exception e)
+        {
+            LogWarning($"RebuildRegister failed: {e.GetType().Name}: {e.Message}");
+        }
     }
 
     private static void EnablePhysics(Transform root)
