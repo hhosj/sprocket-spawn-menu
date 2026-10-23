@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.5.5.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.5.6.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,18 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.5.6：自动清理默认关闭（止损）
+
+0.5.4 的异常变成 `LayingDriveBehaviour.Apply → RotationAxisPhysicsRegister.Update`，说明静态注册表
+不止 AI 一处；而 0.5.2 的 `Dispose` 又会在编辑器重建时弄脏 `VehicleRegister`。这条“手动清理”路线
+目前风险太高。
+
+0.5.6 把 `ClearOnEditorReturn` / `CleanupOnMatchExit` 默认改为 **false**：
+
+- 生成的坦克在回编辑器/切换对局后**会留在原地**（旧行为）；
+- 但不会再因为清理而破坏 AI/物理静态注册表，切换对局应该恢复正常；
+- 两个清理开关保留为实验性选项，想测试可以手动打开。
 
 ## 0.5.5：Dispose → Deregister
 
@@ -146,7 +158,8 @@ Mod Manager 是 Windows 专用；Linux 手动装：
 | `[Spawn] FacePlayer` | `true` | 车头朝向玩家 |
 | `[Spawn] FacingOffsetDegrees` | `0` | 车头反了设 `180` |
 | `[Spawn] CreateSpawnerIfMissing` | `true` | 场景没有生成点时自建 |
-| `[Spawn] ClearOnEditorReturn` | `true` | 回编辑器时清除生成的坦克 |
+| `[Spawn] ClearOnEditorReturn` | `false` | 实验性：回编辑器时清理（可能破坏静态注册表） |
+| `[Spawn] CleanupOnMatchExit` | `false` | 实验性：离场时清理 |
 | `[Keys] UiToggleKey` | `B` | 面板显示/隐藏 |
 | `[Keys] NextBlueprintKey` | `]` | 下一辆 |
 | `[Keys] PrevBlueprintKey` | `[` | 上一辆 |

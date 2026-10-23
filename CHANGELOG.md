@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.6
+- 自动清理（回编辑器/离场）默认关闭：清理会触碰 Sprocket 的静态注册表，
+  曾导致切换对局后无法操控。生成的坦克会留在场景里，但不再破坏游戏状态。
+- 清理开关保留为实验性配置。
+
+
 ## 0.5.5
 - 清场顺序改为 `VehicleSpawn.Dispose()` → `VehicleRegister.Deregister()`：
   前者释放 AIRegister/Avoidance/RotationAxisPhysics 等静态注册表，后者清掉残留的载具注册项。

@@ -23,7 +23,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
 {
     public const string PluginGuid = "sprocket.spawn.menu";
     public const string PluginName = "Sprocket Spawn Menu";
-    public const string PluginVersion = "0.5.5";
+    public const string PluginVersion = "0.5.6";
 
     internal static ManualLogSource Logger;
 
@@ -52,6 +52,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
     internal static ConfigEntry<float> CfgMaxAimDistance;
     internal static ConfigEntry<bool> CfgCreateSpawner;
     internal static ConfigEntry<bool> CfgClearOnEditorReturn;
+    internal static ConfigEntry<bool> CfgCleanupOnMatchExit;
     internal static ConfigEntry<int> CfgConfigVersion;
 
     public override void Load()
@@ -177,9 +178,15 @@ public sealed class SpawnMenuPlugin : BasePlugin
             "If the scene has no VehicleSpawner, create one on a new GameObject and spawn through it.");
 
         CfgClearOnEditorReturn = Config.Bind(
-            "Spawn", "ClearOnEditorReturn", true,
-            "Dispose every vehicle this plugin spawned when the player returns to the vehicle " +
-            "editor (Space). Without this they stay in the world after switching back to play.");
+            "Spawn", "ClearOnEditorReturn", false,
+            "EXPERIMENTAL. Dispose spawned vehicles when returning to the vehicle editor. " +
+            "This touches Sprocket's static AI/physics registries and has caused broken vehicles " +
+            "after mode switches; keep it off unless you want to test cleanup.");
+
+        CfgCleanupOnMatchExit = Config.Bind(
+            "Spawn", "CleanupOnMatchExit", false,
+            "EXPERIMENTAL. Run the same cleanup when leaving a match. Off by default for the " +
+            "same reason as ClearOnEditorReturn.");
 
         if (CfgConfigVersion.Value < 5)
         {
@@ -188,6 +195,14 @@ public sealed class SpawnMenuPlugin : BasePlugin
                 Math.Abs(CfgHeight.Value - 1f) < 0.01f) CfgHeight.Value = 2f;
             CfgConfigVersion.Value = 5;
             Logger.LogInfo("[config] migrated to v5: Distance=150, Height=2 (initial height, then snap to ground).");
+        }
+
+        if (CfgConfigVersion.Value < 7)
+        {
+            CfgClearOnEditorReturn.Value = false;
+            CfgCleanupOnMatchExit.Value = false;
+            CfgConfigVersion.Value = 7;
+            Logger.LogInfo("[config] migrated to v7: automatic cleanup disabled by default.");
         }
 
         if (CfgConfigVersion.Value < 6)
@@ -282,6 +297,8 @@ public sealed class SpawnMenuPlugin : BasePlugin
 
         private static void ReleasePrefix()
         {
+            if (!SpawnMenuPlugin.CfgCleanupOnMatchExit.Value) return;
+
             try
             {
                 SpawnTest.CleanupForSceneExit();
