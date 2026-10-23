@@ -1,0 +1,140 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>Sprocket.SpawnMenu</AssemblyName>
+    <RootNamespace>SprocketSpawnMenu</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version>0.5.0</Version>
+    <AssemblyVersion>0.5.0.0</AssemblyVersion>
+    <FileVersion>0.5.0.0</FileVersion>
+    <DebugType>none</DebugType>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <!-- The game proxies use obsolete Unity 6000 APIs and the BepInEx packages pull a
+         pre-release Cpp2IL that NuGet reports as a version mismatch. Neither matters. -->
+    <NoWarn>$(NoWarn);CS0618;NU1603;NU1701</NoWarn>
+
+    <BepInExVersion Condition="'$(BepInExVersion)' == ''">6.0.0-be.789</BepInExVersion>
+
+    <!-- BepInEx generates the IL2CPP proxy assemblies in BepInEx/interop the first time the
+         game is launched with the loader installed. -->
+    <InteropDir Condition="'$(InteropDir)' == ''">$(HOME)/.local/share/Steam/steamapps/common/Sprocket/BepInEx/interop</InteropDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Core" Version="$(BepInExVersion)" ExcludeAssets="runtime" />
+    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="$(BepInExVersion)" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(InteropDir)')">
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(InteropDir)/Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem.Core">
+      <HintPath>$(InteropDir)/Il2CppSystem.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(InteropDir)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(InteropDir)/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>$(InteropDir)/Unity.InputSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Entities">
+      <HintPath>$(InteropDir)/Sprocket.Entities.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Blueprints">
+      <HintPath>$(InteropDir)/Sprocket.Blueprints.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.VehicleFramework">
+      <HintPath>$(InteropDir)/Sprocket.VehicleFramework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Vehicle.Spawning">
+      <HintPath>$(InteropDir)/Sprocket.Vehicle.Spawning.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Spawning">
+      <HintPath>$(InteropDir)/Sprocket.Spawning.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.SpawningFramework">
+      <HintPath>$(InteropDir)/Sprocket.SpawningFramework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.GameModes">
+      <HintPath>$(InteropDir)/Sprocket.GameModes.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.GameControl">
+      <HintPath>$(InteropDir)/Sprocket.GameControl.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Player">
+      <HintPath>$(InteropDir)/Sprocket.Player.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.VehicleController">
+      <HintPath>$(InteropDir)/Sprocket.VehicleController.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.IO">
+      <HintPath>$(InteropDir)/Sprocket.IO.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Core">
+      <HintPath>$(InteropDir)/Sprocket.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.SceneManagement">
+      <HintPath>$(InteropDir)/Sprocket.SceneManagement.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.PlayerFramework">
+      <HintPath>$(InteropDir)/Sprocket.PlayerFramework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.VehicleDesigner">
+      <HintPath>$(InteropDir)/Sprocket.VehicleDesigner.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Gameplay">
+      <HintPath>$(InteropDir)/Sprocket.Gameplay.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.ScenarioGameMode">
+      <HintPath>$(InteropDir)/Sprocket.ScenarioGameMode.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.DeathmatchGameMode">
+      <HintPath>$(InteropDir)/Sprocket.DeathmatchGameMode.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(InteropDir)/UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Vehicles">
+      <HintPath>$(InteropDir)/Sprocket.Vehicles.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(InteropDir)/UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
