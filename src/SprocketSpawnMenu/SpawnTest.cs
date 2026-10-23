@@ -29,6 +29,9 @@ internal static class SpawnTest
     private static float _nextTrack;
     private static int _trackSeconds;
     private static float _spawnGroundY;
+    private static readonly List<Transform> PendingAiEnable = new();
+    private static readonly Dictionary<Transform, int> PendingAiAttempts = new();
+    private static float _nextAiCheck;
 
     private static readonly List<VehicleSpawn> Spawned = new();
     private static Sprocket.PlayerControl.Player _player;
@@ -95,7 +98,7 @@ internal static class SpawnTest
                         SnapToGround(root, _spawnGroundY);
                         EnablePhysics(root);
                         StartTracking(result, root);
-                        SetOurAIEnabled(root);
+                        QueueAIEnable(root);
                     }
                 }
 
@@ -257,35 +260,83 @@ internal static class SpawnTest
         Log("[cleanup] done");
     }
 
-    private static void SetOurAIEnabled(Transform vehicleRoot)
+    private static void QueueAIEnable(Transform root)
+    {
+        if (root == null) return;
+        if (!PendingAiEnable.Contains(root)) PendingAiEnable.Add(root);
+        PendingAiAttempts[root] = 0;
+
+        TryEnablePendingAIs();
+    }
+
+    private static void TryEnablePendingAIs()
+    {
+        if (PendingAiEnable.Count == 0) return;
+
+        var now = Time.realtimeSinceStartup;
+        if (now < _nextAiCheck) return;
+        _nextAiCheck = now + 1f;
+
+        for (var i = PendingAiEnable.Count - 1; i >= 0; i--)
+        {
+            var root = PendingAiEnable[i];
+            var attempts = PendingAiAttempts.TryGetValue(root, out var a) ? a : 0;
+
+            var enabled = EnableAIFor(root);
+            attempts++;
+
+            if (enabled > 0)
+            {
+                Log($"[spawn] AI enabled for {enabled} commander(s) after {attempts} attempt(s)");
+                PendingAiEnable.RemoveAt(i);
+                PendingAiAttempts.Remove(root);
+                continue;
+            }
+
+            if (attempts >= 10)
+            {
+                LogWarning("[spawn] gave up enabling AI after 10 attempts - it may only start on battle reset.");
+                PendingAiEnable.RemoveAt(i);
+                PendingAiAttempts.Remove(root);
+                continue;
+            }
+
+            PendingAiAttempts[root] = attempts;
+        }
+    }
+
+    private static int EnableAIFor(Transform vehicleRoot)
     {
         try
         {
             var registerType = Interop.FindType("Sprocket.ArtificialIntelligence.AIRegister");
-            if (registerType == null) return;
+            if (registerType == null) return 0;
 
             var list = GetAIRegisterList(registerType);
             if (list == null)
             {
                 LogWarning("AIRegister list unavailable; spawned AI may stay idle until reset.");
-                return;
+                return 0;
             }
 
             var listType = list.GetType();
             var countMember = (MemberInfo)listType.GetProperty("Count", Interop.InstanceAny)
                               ?? listType.GetMethod("get_Count", Interop.InstanceAny);
             var itemMethod = listType.GetMethod("get_Item", Interop.InstanceAny);
-            if (countMember == null || itemMethod == null) return;
+            if (countMember == null || itemMethod == null) return 0;
 
             var team = (int)(1 << (SpawnMenuPlugin.CfgTeam.Value - 1));
             var count = (int)ReadMember(countMember, list);
             var enabled = 0;
+            var matchedByTeam = 0;
 
             for (var i = 0; i < count; i++)
             {
                 var ai = itemMethod.Invoke(list, new object[] { i });
                 if (ai == null) continue;
-                if (!IsOurAI(ai, vehicleRoot) && GetAITeam(ai) != team) continue;
+                var aiTeam = GetAITeam(ai);
+                if (!IsOurAI(ai, vehicleRoot) && aiTeam != team) continue;
+                if (!IsOurAI(ai, vehicleRoot)) matchedByTeam++;
 
                 var enabledProperty = ai.GetType().GetProperty("Enabled", Interop.InstanceAny);
                 if (enabledProperty == null || !enabledProperty.CanWrite) continue;
@@ -294,12 +345,14 @@ internal static class SpawnTest
                 enabled++;
             }
 
-            Log($"[spawn] AI enabled for {enabled} commander(s) on the spawned vehicle");
+            Log($"[spawn] AIRegister count={count} enabled={enabled} matchedByTeam={matchedByTeam}");
         }
         catch (Exception e)
         {
             LogWarning($"enabling spawned AI failed: {e.GetType().Name}: {e.Message}");
         }
+
+        return 0;
     }
 
     private static int GetAITeam(object ai)
@@ -529,6 +582,12 @@ internal static class SpawnTest
     }
 
     internal static void Track()
+    {
+        TrackVehicle();
+        TryEnablePendingAIs();
+    }
+
+    private static void TrackVehicle()
     {
         if (ReferenceEquals(_trackedTransform, null)) return;
 

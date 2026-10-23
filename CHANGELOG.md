@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1
+- 生成后每秒重试启用本车 CommanderAI（最多 10 次），并打印 AIRegister 实际数量，
+  诊断“AI 延迟注册”还是“匹配失败”。
+
+
 ## 0.6.0
 - `ClearOnEditorReturn` 默认开启（Dispose → Deregister，与重置战局相同的已验证顺序）。
 - 生成后把本车 CommanderAI 的 `Enabled` 设为 true，AI 立即行动，不再等重置战局。
