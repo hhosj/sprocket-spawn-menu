@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1
+- 修复下一局履带消失/无法操控：清场不再调用 `VehicleSpawn.Dispose()`/`factory.Destroy()`
+  （会释放跨载具共享的 baked mesh），改为 `Deregister` + `SetActive(false)`。
+- 在 `GameController.Release` 时清理本模组生成的车，避免参与场景拆除。
+
+
 ## 0.5.0
 - 回坦克编辑器（空格）时自动清除本模组生成的所有坦克（`VehicleSpawn.Dispose`）。
 - 切场景时清空内部列表，不重复销毁。

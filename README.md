@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.5.0.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.5.1.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,17 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.5.1：修复“下一局履带消失、无法操控”
+
+0.5.0 回编辑器时用 `VehicleSpawn.Dispose()`（内部 `factory.Destroy`）清场。这条路径会释放
+**baked mesh**，而 Sprocket 的履带等网格是跨载具共享的，结果下一局玩家坦克的履带可能消失、无法驾驶。
+
+0.5.1 改成：
+
+- 只做 `VehicleRegister.Deregister(vehicle)` + `gameObject.SetActive(false)`，**不再调用**工厂销毁/资源卸载；
+- 增加 `GameController.Release` 前缀，在离开一局之前就把本模组生成的车注销并隐藏，避免它们参与场景拆除；
+- 切场景时只忘掉列表，不触碰已销毁对象。
 
 ## 前置
 

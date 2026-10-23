@@ -160,11 +160,13 @@ internal static class SpawnTest
         }
     }
 
+    internal static void CleanupForSceneExit() => ClearSpawned("match exit");
+
     private static void ClearSpawned(string reason, bool dispose = true)
     {
         if (Spawned.Count == 0) return;
 
-        Log($"[cleanup] {reason}: {(dispose ? "disposing" : "forgetting")} {Spawned.Count} spawned vehicle(s)");
+        Log($"[cleanup] {reason}: {(dispose ? "deactivating" : "forgetting")} {Spawned.Count} spawned vehicle(s)");
 
         if (!dispose)
         {
@@ -181,14 +183,19 @@ internal static class SpawnTest
             try
             {
                 var vehicle = spawn.Vehicle;
+
+                // Do NOT call VehicleSpawn.Dispose()/factory.Destroy() here: that path releases
+                // baked meshes, and Sprocket shares those meshes between vehicles. Releasing a
+                // spawned tank could leave the next match's tracks invisible/unusable.
                 try { _register?.Deregister(vehicle); }
                 catch { /* may already be gone */ }
 
-                spawn.Dispose();
+                var root = GetVehicleTransform(vehicle);
+                if (root != null) root.gameObject.SetActive(false);
             }
             catch (Exception e)
             {
-                LogWarning($"[cleanup] one vehicle could not be disposed: {e.GetType().Name}");
+                LogWarning($"[cleanup] one vehicle could not be hidden: {e.GetType().Name}");
             }
         }
 
