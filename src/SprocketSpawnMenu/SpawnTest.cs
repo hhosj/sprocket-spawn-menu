@@ -5,6 +5,9 @@ using Il2CppInterop.Runtime.InteropTypes;
 using Sprocket;
 using Sprocket.Vehicles;
 using Sprocket.Vehicles.Serialization;
+using Sprocket.ArtificialIntelligence;
+using Sprocket.Orders;
+using Sprocket.Vehicles.Control;
 using Sprocket.Vehicles.Spawning;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -29,6 +32,7 @@ internal static class SpawnTest
     private static float _nextTrack;
     private static int _trackSeconds;
     private static float _spawnGroundY;
+    private static int _aiCountBefore = -1;
     private static readonly List<Transform> PendingAiEnable = new();
     private static readonly Dictionary<Transform, int> PendingAiAttempts = new();
     private static float _nextAiCheck;
@@ -346,6 +350,16 @@ internal static class SpawnTest
             }
 
             Log($"[spawn] AIRegister count={count} enabled={enabled} (all)");
+
+            if (_aiCountBefore >= 0 && count > _aiCountBefore)
+            {
+                for (var i = _aiCountBefore; i < count; i++)
+                {
+                    var ai = itemMethod.Invoke(list, new object[] { i });
+                    if (ai == null) continue;
+                    if (ai is Il2CppObjectBase proxy) IssueAttackOrder(proxy);
+                }
+            }
         }
         catch (Exception e)
         {
@@ -353,6 +367,62 @@ internal static class SpawnTest
         }
 
         return 0;
+    }
+
+    private static void IssueAttackOrder(Il2CppObjectBase aiProxy)
+    {
+        try
+        {
+            var commander = aiProxy.TryCast<CommanderAI>();
+            if (commander == null) return;
+
+            if (!TryGetPlayerEntityID(out var target))
+            {
+                LogWarning("attack order skipped: player vehicle EntityID not found.");
+                return;
+            }
+
+            var info = new AttackOrderInfo(target, AttackApproachType.Aggressive,
+                AttackEngageMode.StopToFire, 1f);
+            var order = new AttackOrder(ref info, 128, OrderCancellationType.CancelOnNextOrder);
+            commander.Order(order);
+            Log($"[spawn] AttackOrder issued to spawned commander (target={target.TeamID}).");
+        }
+        catch (Exception e)
+        {
+            LogWarning($"AttackOrder failed: {e.GetType().Name}: {e.Message}");
+        }
+    }
+
+    private static bool TryGetPlayerEntityID(out EntityID id)
+    {
+        id = default;
+
+        try
+        {
+            var controllers = UnityEngine.Object.FindObjectsByType<
+                Sprocket.Gameplay.VehicleControl.VehicleController>(FindObjectsSortMode.None);
+
+            if (controllers == null || controllers.Length == 0) return false;
+
+            if (Interop.TryGetValue(typeof(Sprocket.Gameplay.VehicleControl.VehicleController),
+                    controllers[0], "controlTarget", out var target) &&
+                target is Il2CppObjectBase proxy)
+            {
+                var behaviour = proxy.TryCast<IAIControllableVehicle>();
+                if (behaviour != null)
+                {
+                    id = behaviour.ID;
+                    return true;
+                }
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return false;
     }
 
     private static int GetAITeam(object ai)
@@ -753,6 +823,7 @@ internal static class SpawnTest
 
             _register = FindVehicleRegister();
             _registerCountBefore = _register?.TotalRegisteredCount ?? -1;
+            _aiCountBefore = CountAIs();
             Log($"vehicle register = {(_register == null ? "<null>" : _register.GetType().Name)} " +
                 $"countBefore={_registerCountBefore}");
 

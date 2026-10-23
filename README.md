@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.6.3.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.6.4.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,18 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.6.4：下发攻击命令
+
+0.6.3 把 `AIRegister` 全部设为 `Enabled=true`，但 AI 仍然待机，说明真正的门槛是**命令**。
+0.6.4 在生成后对新加入 `AIRegister` 的 `CommanderAI` 下发 `AttackOrder`，目标为玩家载具的
+`EntityID`（`Aggressive` + `StopToFire`）。日志：
+
+```
+[spawn] AttackOrder issued to spawned commander (target=Team1).
+```
+
+如果玩家载具的 `EntityID` 取不到，会打 `attack order skipped`。
 
 ## 0.6.3：启用整个 AIRegister
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.4
+- 生成后对新加入静态 AIRegister 的 CommanderAI 下发 AttackOrder（目标为玩家载具 EntityID），
+  解决“AI 已启用但待机”的问题。
+
+
 ## 0.6.3
 - AI 启用改为遍历整个静态 AIRegister，把所有 AI 的 Enabled 设为 true；
   按车辆/队伍匹配不可靠（日志 count=4 但 matched=0）。
