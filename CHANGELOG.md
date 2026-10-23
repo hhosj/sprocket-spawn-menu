@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.3
+- AI 启用改为遍历整个静态 AIRegister，把所有 AI 的 Enabled 设为 true；
+  按车辆/队伍匹配不可靠（日志 count=4 但 matched=0）。
+
+
 ## 0.6.2
 - 生成并注册后调用 `VehicleRegister.RebuildRegister()`，模拟重置战局对载具/AI 的重建，
   让生成的车立即获得 AI 行为。

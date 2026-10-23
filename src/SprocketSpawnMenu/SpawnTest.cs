@@ -331,27 +331,21 @@ internal static class SpawnTest
                 return 0;
             }
 
-            var team = (int)(1 << (SpawnMenuPlugin.CfgTeam.Value - 1));
             var count = (int)ReadMember(countMember, list);
             var enabled = 0;
-            var matchedByTeam = 0;
 
             for (var i = 0; i < count; i++)
             {
                 var ai = itemMethod.Invoke(list, new object[] { i });
                 if (ai == null) continue;
-                var aiTeam = GetAITeam(ai);
-                if (!IsOurAI(ai, vehicleRoot) && aiTeam != team) continue;
-                if (!IsOurAI(ai, vehicleRoot)) matchedByTeam++;
 
-                var enabledProperty = ai.GetType().GetProperty("Enabled", Interop.InstanceAny);
-                if (enabledProperty == null || !enabledProperty.CanWrite) continue;
-
-                enabledProperty.SetValue(ai, true);
-                enabled++;
+                // Matching by transform/team proved unreliable across scenes. Every AI in this
+                // static registry is supposed to be enabled anyway, so enable them all; our
+                // freshly spawned commander is necessarily among them.
+                if (Interop.TrySetValue(ai.GetType(), ai, "Enabled", true)) enabled++;
             }
 
-            Log($"[spawn] AIRegister count={count} enabled={enabled} matchedByTeam={matchedByTeam}");
+            Log($"[spawn] AIRegister count={count} enabled={enabled} (all)");
         }
         catch (Exception e)
         {
