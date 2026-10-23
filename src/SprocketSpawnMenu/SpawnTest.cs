@@ -193,6 +193,13 @@ internal static class SpawnTest
         return -1;
     }
 
+    internal static void CleanupForReset()
+    {
+        ClearSpawned("battle reset");
+        _register = null;
+        _registerCountBefore = -1;
+    }
+
     internal static void CleanupForSceneExit()
     {
         ClearSpawned("match exit");

@@ -23,7 +23,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
 {
     public const string PluginGuid = "sprocket.spawn.menu";
     public const string PluginName = "Sprocket Spawn Menu";
-    public const string PluginVersion = "0.5.8";
+    public const string PluginVersion = "0.5.9";
 
     internal static ManualLogSource Logger;
 
@@ -271,6 +271,9 @@ public sealed class SpawnMenuPlugin : BasePlugin
             PatchOne(harmony, typeof(GameController), "Release",
                 nameof(ReleasePrefix), "GameController.Release (cleanup before leaving the match)");
 
+            PatchOne(harmony, typeof(DeathmatchGameMode), "ResetGame",
+                nameof(ResetGamePrefix), "DeathmatchGameMode.ResetGame (cleanup before resetting the battle)");
+
             if (!patched)
                 PatchOne(harmony, typeof(GameMode), "GameModeUpdate",
                     nameof(GameModeUpdatePrefix), "GameMode.GameModeUpdate (fallback tick)");
@@ -301,6 +304,18 @@ public sealed class SpawnMenuPlugin : BasePlugin
         }
 
         private static void SceneUpdatePrefix() => Tick();
+
+        private static void ResetGamePrefix()
+        {
+            try
+            {
+                SpawnTest.CleanupForReset();
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"cleanup on battle reset failed: {e}");
+            }
+        }
 
         private static void ReleasePrefix()
         {

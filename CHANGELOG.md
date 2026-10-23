@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.9
+- 给 `DeathmatchGameMode.ResetGame` 加前缀：重置战局前 Dispose + Deregister 本模组生成的车，
+  避免它们留到重置后并获得 AI 行为、最终破坏操控。
+
+
 ## 0.5.8
 - 离场清理时额外 `AIRegister.Clear()` + 清 avoidance 槽位，移除静态 AI 任务（FlankTargetTask 等）
   对已销毁目标的引用，修复“对局→主菜单→沙盒”后的每帧 NRE。
