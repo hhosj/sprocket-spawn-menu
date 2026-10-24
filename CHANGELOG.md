@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.9
+- 回退 0.6.8 的非销毁式重置清理：未 Dispose 会让静态 RotationAxisPhysicsRegister 留脏，
+  重置后无法操控。恢复 Dispose → Deregister；重置后特效可能消失的问题仍然存在。
+
+
 ## 0.6.8
 - 重置战局清理改为非销毁式（Deregister + SetActive(false) + 清 AIRegister），
   不再 `Dispose`/`factory.Destroy`，修复重置一两次后特效消失。

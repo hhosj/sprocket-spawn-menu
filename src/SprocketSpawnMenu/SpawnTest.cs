@@ -203,40 +203,13 @@ internal static class SpawnTest
 
     internal static void CleanupForReset()
     {
-        if (Spawned.Count > 0)
-        {
-            Log($"[cleanup] battle reset: deactivating {Spawned.Count} spawned vehicle(s)");
-
-            foreach (var spawn in Spawned)
-            {
-                try
-                {
-                    var vehicle = spawn.Vehicle;
-                    try { _register?.Deregister(vehicle); }
-                    catch { /* may already be gone */ }
-
-                    var root = GetVehicleTransform(vehicle);
-                    if (root != null) root.gameObject.SetActive(false);
-                }
-                catch (Exception e)
-                {
-                    LogWarning($"[cleanup] reset cleanup failed: {e.GetType().Name}");
-                }
-            }
-
-            Spawned.Clear();
-            _trackedTransform = null;
-            _spawnResult = null;
-        }
-
+        // Dispose is required here: hiding the objects leaves their entries in the static
+        // RotationAxisPhysicsRegister/AIRegister, which throws every frame after the reset.
+        // This releases shared effect assets (effects can disappear after a reset), but that is
+        // preferable to breaking vehicle control; a proper fix needs the game's own spawn event.
+        ClearSpawned("battle reset");
         _register = null;
         _registerCountBefore = -1;
-
-        // Do NOT use VehicleSpawn.Dispose() here: factory.Destroy releases shared effect/baked
-        // assets, and after one or two resets the game's muzzle/explosion effects disappear.
-        // ResetGame rebuilds the registries itself, so just clear the static AI list.
-        var registerType = Interop.FindType("Sprocket.ArtificialIntelligence.AIRegister");
-        if (registerType != null) ClearAllAIs(registerType);
     }
 
     internal static void CleanupForSceneExit()
