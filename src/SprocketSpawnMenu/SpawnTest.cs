@@ -359,13 +359,14 @@ internal static class SpawnTest
                     if (ai is Il2CppObjectBase proxy) IssueAttackOrder(proxy);
                 }
             }
+
+            return enabled;
         }
         catch (Exception e)
         {
             LogWarning($"enabling spawned AI failed: {e.GetType().Name}: {e.Message}");
+            return 0;
         }
-
-        return 0;
     }
 
     private static void IssueAttackOrder(Il2CppObjectBase aiProxy)

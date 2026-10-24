@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.6
+- 修复 `EnableAIFor` 永远返回 0 导致的重试不退出、`AttackOrder` 每 0.5 秒重复下发。
+- 现在每次生成只启用/命令一次。
+
+
 ## 0.6.5
 - 移除每次生成后的 `VehicleRegister.RebuildRegister()`（疑似导致生成延迟和特效消失）。
 - AI 启用重试间隔 1s -> 0.5s。
