@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.6.4.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.6.5.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,12 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.6.5：去掉 RebuildRegister，缩短 AI 启用延迟
+
+0.6.4 的 `AttackOrder` 已经能让 AI 行动，但有两个副作用：行动有几秒延迟、生成后有概率特效消失。
+怀疑是每次生成都调用 `VehicleRegister.RebuildRegister()`（重建整套载具注册）导致的。
+0.6.5 删掉这个调用，AI 启用重试间隔从 1 秒缩到 0.5 秒；`AttackOrder` 逻辑保留。
 
 ## 0.6.4：下发攻击命令
 

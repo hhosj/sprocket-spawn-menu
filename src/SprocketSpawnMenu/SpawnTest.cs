@@ -90,7 +90,6 @@ internal static class SpawnTest
                         $"BehaviourEnabled={SafeGet(vehicle, "BehaviourEnabled")}");
 
                     RegisterIfNeeded(vehicle);
-                    TryRebuildRegister();
 
                     var root = GetVehicleTransform(vehicle);
                     if (root == null)
@@ -280,7 +279,7 @@ internal static class SpawnTest
 
         var now = Time.realtimeSinceStartup;
         if (now < _nextAiCheck) return;
-        _nextAiCheck = now + 1f;
+        _nextAiCheck = now + 0.5f;
 
         for (var i = PendingAiEnable.Count - 1; i >= 0; i--)
         {
@@ -996,19 +995,6 @@ internal static class SpawnTest
         Log($"created spawner; default resources={resources}; override set={applied}");
 
         return spawner;
-    }
-
-    private static void TryRebuildRegister()
-    {
-        try
-        {
-            _register?.RebuildRegister();
-            Log("[spawn] VehicleRegister.RebuildRegister() called (may create/activate AI)");
-        }
-        catch (Exception e)
-        {
-            LogWarning($"RebuildRegister failed: {e.GetType().Name}: {e.Message}");
-        }
     }
 
     private static void EnablePhysics(Transform root)

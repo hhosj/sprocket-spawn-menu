@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.5
+- 移除每次生成后的 `VehicleRegister.RebuildRegister()`（疑似导致生成延迟和特效消失）。
+- AI 启用重试间隔 1s -> 0.5s。
+
+
 ## 0.6.4
 - 生成后对新加入静态 AIRegister 的 CommanderAI 下发 AttackOrder（目标为玩家载具 EntityID），
   解决“AI 已启用但待机”的问题。
