@@ -4,6 +4,19 @@
 
 *A BepInEx plugin for Sprocket 0.2 that restores sandbox vehicle spawning: aim, press a key, get an AI tank.*
 
+## 0.6.10：仅沙盒可用
+
+主菜单、任务场景中禁用生成菜单的一切功能（热键、蓝图面板、生成、探针）。判断依据是
+`GameController.setupContext.Mode == SupportedGameModes.Sandbox`；主菜单没有 GameController，
+直接拒绝。清理逻辑仍然保留，离场不会残留。
+
+日志会打一次：
+
+```
+[gate] mode=Sandbox; spawn menu=enabled
+[gate] mode=Mission; spawn menu=disabled
+```
+
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它

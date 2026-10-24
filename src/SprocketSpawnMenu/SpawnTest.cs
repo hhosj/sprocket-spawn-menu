@@ -650,6 +650,12 @@ internal static class SpawnTest
 
     internal static void TrySpawn()
     {
+        if (!SandboxGate.Allowed)
+        {
+            LogError("spawn menu is sandbox-only; ignoring spawn request.");
+            return;
+        }
+
         if (_pending != null)
         {
             LogError("a spawn is already in flight; wait for it to finish.");

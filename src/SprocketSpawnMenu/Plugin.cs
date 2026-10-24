@@ -23,7 +23,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
 {
     public const string PluginGuid = "sprocket.spawn.menu";
     public const string PluginName = "Sprocket Spawn Menu";
-    public const string PluginVersion = "0.6.0";
+    public const string PluginVersion = "0.6.10";
 
     internal static ManualLogSource Logger;
 
@@ -369,6 +369,18 @@ public sealed class SpawnMenuPlugin : BasePlugin
                     Logger.LogInfo(
                         $"[tick] alive frame={frame} realtime={now:0.0} fps={fps:0.0}");
                 }
+            }
+
+            if (!SandboxGate.Allowed)
+            {
+                SpawnMenuUi.Hide();
+
+                // Pending spawns still need polling, and cleanup must keep running when the
+                // player leaves the sandbox; only new menu actions are blocked.
+                SpawnTest.Poll();
+                SpawnTest.Track();
+                SpawnTest.PollPlayerState();
+                return;
             }
 
             try

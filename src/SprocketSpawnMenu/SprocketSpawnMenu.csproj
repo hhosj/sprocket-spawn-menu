@@ -9,9 +9,9 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>0.6.0</Version>
-    <AssemblyVersion>0.6.0.0</AssemblyVersion>
-    <FileVersion>0.6.0.0</FileVersion>
+    <Version>0.6.10</Version>
+    <AssemblyVersion>0.6.10.0</AssemblyVersion>
+    <FileVersion>0.6.10.0</FileVersion>
     <DebugType>none</DebugType>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <!-- The game proxies use obsolete Unity 6000 APIs and the BepInEx packages pull a

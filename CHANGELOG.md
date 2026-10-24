@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.10
+- 生成菜单限制为仅沙盒模式：主菜单、任务场景禁用热键/UI/生成/探针。
+- 用 `GameController.setupContext.Mode` 判断，主菜单无 GameController 即拒绝。
+
+
 ## 0.6.0
 - `ClearOnEditorReturn` 默认开启（Dispose → Deregister，与重置战局相同的已验证顺序）。
 - 生成后把本车 CommanderAI 的 `Enabled` 设为 true，AI 立即行动，不再等重置战局。

@@ -47,8 +47,21 @@ public sealed class SpawnMenuUi : MonoBehaviour
         SpawnMenuPlugin.Logger.LogInfo($"[ui] {(_visible ? "shown" : "hidden")}.");
     }
 
+    internal static void Hide()
+    {
+        if (!_visible) return;
+        _visible = false;
+        SpawnMenuPlugin.Logger.LogInfo("[ui] hidden (spawn menu is sandbox-only).");
+    }
+
     private void OnGUI()
     {
+        if (!SandboxGate.Allowed)
+        {
+            _visible = false;
+            return;
+        }
+
         if (!_visible) return;
 
         try
