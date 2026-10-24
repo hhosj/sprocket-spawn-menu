@@ -1,2 +1,2 @@
-585b4e6dc6233426950c393c8b7cfe8ce57de29df4c512028ccb44f33826030a  Sprocket.SpawnMenu-0.6.7.zip
-e77a04297daf2be75ddae83dcf2cf337aa8e5b4444512c8542ab1cf4c447439f  Sprocket.SpawnMenu.dll
+0ee4aa3af3e63e960485996d1747fa0f5ffbad4b1db8b990e3e9d62218eb0ca1  Sprocket.SpawnMenu-0.6.8.zip
+b30e4b099b74743dfe300492d63327317e9cdbbfb4e53d1b9e254380529ffaab  Sprocket.SpawnMenu.dll

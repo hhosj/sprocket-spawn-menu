@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.6.7.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.6.8.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,6 +21,17 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
+
+## 0.6.8：重置战局不再销毁载具
+
+特效消失出现在“重置一两次后”，指向重置清理里的 `VehicleSpawn.Dispose()` → `factory.Destroy()`：
+它会释放共享特效/烘焙资源。0.6.8 的重置清理改成非销毁式：
+
+1. `VehicleRegister.Deregister(vehicle)`；
+2. `gameObject.SetActive(false)`；
+3. 清空静态 `AIRegister`（`ResetGame` 会自己重建）。
+
+不再调用 `Dispose`/`factory.Destroy`。离开对局（回主菜单）仍然用 Dispose，避免静态注册表留脏。
 
 ## 0.6.7：只启用本次新增的 AI
 

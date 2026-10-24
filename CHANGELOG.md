@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.8
+- 重置战局清理改为非销毁式（Deregister + SetActive(false) + 清 AIRegister），
+  不再 `Dispose`/`factory.Destroy`，修复重置一两次后特效消失。
+
+
 ## 0.6.7
 - 只启用/命令本次生成新增的 AI，不再唤醒 AIRegister 里原有的其它 AI（特效异常的剩余嫌疑）。
 
