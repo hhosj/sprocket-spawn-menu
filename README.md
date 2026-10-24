@@ -13,12 +13,12 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.6.10.zip`](release/Sprocket.SpawnMenu-0.6.10.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.6.11.zip`](release/Sprocket.SpawnMenu-0.6.11.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 **直接下载：**
 [`Sprocket.SpawnMenu.dll`](https://github.com/hhosj/sprocket-spawn-menu/raw/main/release/Sprocket.SpawnMenu.dll) ·
-[`Sprocket.SpawnMenu-0.6.10.zip`](https://github.com/hhosj/sprocket-spawn-menu/raw/main/release/Sprocket.SpawnMenu-0.6.10.zip)
+[`Sprocket.SpawnMenu-0.6.11.zip`](https://github.com/hhosj/sprocket-spawn-menu/raw/main/release/Sprocket.SpawnMenu-0.6.11.zip)
 
 
 
@@ -53,7 +53,7 @@ mkdir -p BepInEx/unity-libs
 curl -fL -o BepInEx/unity-libs/6000.3.21.zip 'https://unity.bepinex.dev/libraries/6000.3.21.zip'
 
 # 3) 本模组
-unzip -o ~/Downloads/Sprocket.SpawnMenu-0.6.10.zip -d BepInEx/plugins/
+unzip -o ~/Downloads/Sprocket.SpawnMenu-0.6.11.zip -d BepInEx/plugins/
 ```
 
 然后在 Steam → Sprocket → 属性 → 启动选项加上（**必须**，否则 Proton 不会加载模组）：

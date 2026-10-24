@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.11
+- 修复从主菜单重新进入沙盒后，回编辑器不再清理生成坦克的问题：离场时重置缓存的
+  Player/状态跟踪，避免同名 `Sandbox` 场景沿用旧场景的 Player 代理。
+
+
 ## 0.6.10
 - 生成菜单限制为仅沙盒模式：主菜单、任务场景禁用热键/UI/生成/探针。
 - 用 `GameController.setupContext.Mode` 判断，主菜单无 GameController 即拒绝。

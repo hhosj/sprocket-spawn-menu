@@ -23,7 +23,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
 {
     public const string PluginGuid = "sprocket.spawn.menu";
     public const string PluginName = "Sprocket Spawn Menu";
-    public const string PluginVersion = "0.6.10";
+    public const string PluginVersion = "0.6.11";
 
     internal static ManualLogSource Logger;
 
@@ -325,6 +325,11 @@ public sealed class SpawnMenuPlugin : BasePlugin
 
         private static void ReleasePrefix()
         {
+            // The sandbox scene is always called "Sandbox"; leaving to the main menu and coming
+            // back does not change the name, so the cached Player/state would otherwise survive
+            // and editor cleanup would never fire again.
+            SpawnTest.ResetPlayerTracking();
+
             if (!SpawnMenuPlugin.CfgCleanupOnMatchExit.Value) return;
 
             try

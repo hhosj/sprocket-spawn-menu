@@ -7,6 +7,7 @@
 - `main` 上的代码必须保持 0.6.0 的行为；实验性改动开 `experiment/*` 分支，验证通过前不得合并。
 - 0.6.0 的 dll 哈希：`e16084ab7f82c685863f7c6f32d2d0a6396d67fc8b22556de29fa63ccea2f9f9`。
 - 0.6.10（沙盒门禁）的 dll 哈希：`dad3d77f5bd28409a5da05a5551cce353e5ad8877e066cd3a5b945f090de1e2c`。
+- 0.6.11（离场重置 Player 跟踪）的 dll 哈希：`3393d920eff6a4988d37a3d96a83e34e161180b22e114cd46c61941a9affcd17`。
 
 ## 硬性底线
 

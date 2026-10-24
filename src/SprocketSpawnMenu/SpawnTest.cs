@@ -201,8 +201,16 @@ internal static class SpawnTest
         _registerCountBefore = -1;
     }
 
+    internal static void ResetPlayerTracking()
+    {
+        _player = null;
+        _lastPlayerState = null;
+        _lastScene = null;
+    }
+
     internal static void CleanupForSceneExit()
     {
+        ResetPlayerTracking();
         ClearSpawned("match exit");
 
         // Leaving a match must also wipe the STATIC AI registry: AIs (including the map's own
