@@ -335,30 +335,23 @@ internal static class SpawnTest
             }
 
             var count = (int)ReadMember(countMember, list);
+
+            // Only touch the AI(s) added by this spawn. Enabling every AI in the static registry
+            // also woke up the map's own target AIs, which is the remaining suspect for the
+            // disappearing effects.
+            var firstNew = _aiCountBefore >= 0 ? _aiCountBefore : Math.Max(0, count - 1);
             var enabled = 0;
 
-            for (var i = 0; i < count; i++)
+            for (var i = firstNew; i < count; i++)
             {
                 var ai = itemMethod.Invoke(list, new object[] { i });
                 if (ai == null) continue;
 
-                // Matching by transform/team proved unreliable across scenes. Every AI in this
-                // static registry is supposed to be enabled anyway, so enable them all; our
-                // freshly spawned commander is necessarily among them.
                 if (Interop.TrySetValue(ai.GetType(), ai, "Enabled", true)) enabled++;
+                if (ai is Il2CppObjectBase proxy) IssueAttackOrder(proxy);
             }
 
-            Log($"[spawn] AIRegister count={count} enabled={enabled} (all)");
-
-            if (_aiCountBefore >= 0 && count > _aiCountBefore)
-            {
-                for (var i = _aiCountBefore; i < count; i++)
-                {
-                    var ai = itemMethod.Invoke(list, new object[] { i });
-                    if (ai == null) continue;
-                    if (ai is Il2CppObjectBase proxy) IssueAttackOrder(proxy);
-                }
-            }
+            Log($"[spawn] AIRegister count={count} new={Math.Max(0, count - firstNew)} enabled={enabled}");
 
             return enabled;
         }
