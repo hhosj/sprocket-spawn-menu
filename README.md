@@ -4,6 +4,11 @@
 
 *A BepInEx plugin for Sprocket 0.2 that restores sandbox vehicle spawning: aim, press a key, get an AI tank.*
 
+
+> **0.7.0 实验分支（experiment/native-spawn）**：改用游戏原生的
+> `StageVehicleSpawnEvent` 生成（`UseNativeSpawn=true`）。注册、AI、所有权、清理都由游戏负责；
+> 旧的 0.6.0 手动路径仍保留为 `UseNativeSpawn=false`。此分支未合并 `main`。
+
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它

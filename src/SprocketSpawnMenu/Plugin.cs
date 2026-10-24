@@ -23,7 +23,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
 {
     public const string PluginGuid = "sprocket.spawn.menu";
     public const string PluginName = "Sprocket Spawn Menu";
-    public const string PluginVersion = "0.6.0";
+    public const string PluginVersion = "0.7.0";
 
     internal static ManualLogSource Logger;
 
@@ -51,6 +51,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
     internal static ConfigEntry<bool> CfgSpawnAtAim;
     internal static ConfigEntry<float> CfgMaxAimDistance;
     internal static ConfigEntry<bool> CfgCreateSpawner;
+    internal static ConfigEntry<bool> CfgUseNativeSpawn;
     internal static ConfigEntry<bool> CfgClearOnEditorReturn;
     internal static ConfigEntry<bool> CfgCleanupOnMatchExit;
     internal static ConfigEntry<int> CfgConfigVersion;
@@ -176,6 +177,11 @@ public sealed class SpawnMenuPlugin : BasePlugin
         CfgCreateSpawner = Config.Bind(
             "Spawn", "CreateSpawnerIfMissing", true,
             "If the scene has no VehicleSpawner, create one on a new GameObject and spawn through it.");
+
+        CfgUseNativeSpawn = Config.Bind(
+            "Spawn", "UseNativeSpawn", true,
+            "Spawn through the game's StageVehicleSpawnEvent (native lifecycle: registration, AI, " +
+            "ownership and cleanup). Off = legacy manual Spawner.Spawn path.");
 
         CfgClearOnEditorReturn = Config.Bind(
             "Spawn", "ClearOnEditorReturn", true,

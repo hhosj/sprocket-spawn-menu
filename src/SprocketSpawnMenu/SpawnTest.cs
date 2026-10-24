@@ -143,6 +143,7 @@ internal static class SpawnTest
             if (SpawnMenuPlugin.CfgClearOnEditorReturn.Value &&
                 stateName.IndexOf("Editor", StringComparison.OrdinalIgnoreCase) >= 0)
             {
+                NativeSpawn.Cleanup();
                 ClearSpawned("returned to the vehicle editor");
             }
 
@@ -203,6 +204,7 @@ internal static class SpawnTest
 
     internal static void CleanupForSceneExit()
     {
+        NativeSpawn.Cleanup();
         ClearSpawned("match exit");
 
         // Leaving a match must also wipe the STATIC AI registry: AIs (including the map's own
@@ -656,6 +658,16 @@ internal static class SpawnTest
             return;
         }
 
+        if (SpawnMenuPlugin.CfgUseNativeSpawn.Value)
+        {
+            BlueprintLibrary.EnsureScanned();
+            var nativeRegister = FindVehicleRegister();
+            if (NativeSpawn.TrySpawn(nativeRegister, BlueprintLibrary.Current)) return;
+
+            LogError("native spawn failed; not falling back to the manual Spawn+Register path.");
+            return;
+        }
+
         try
         {
             var controllers = UnityEngine.Object.FindObjectsByType<Sprocket.GameControl.GameController>(
@@ -942,7 +954,7 @@ internal static class SpawnTest
         }
     }
 
-    private static VehicleRegister FindVehicleRegister()
+    internal static VehicleRegister FindVehicleRegister()
     {
         try
         {
@@ -988,7 +1000,7 @@ internal static class SpawnTest
         return null;
     }
 
-    private static bool TryGetAimPoint(Sprocket.PlayerControl.Player player, out Vector3 point)
+    internal static bool TryGetAimPoint(Sprocket.PlayerControl.Player player, out Vector3 point)
     {
         point = default;
 
@@ -1079,7 +1091,7 @@ internal static class SpawnTest
         return null;
     }
 
-    private static Quaternion FacePlayerRotation(Vector3 playerPosition, Vector3 spawnPosition,
+    internal static Quaternion FacePlayerRotation(Vector3 playerPosition, Vector3 spawnPosition,
         Sprocket.PlayerControl.Player player)
     {
         if (!SpawnMenuPlugin.CfgFacePlayer.Value)
@@ -1098,7 +1110,7 @@ internal static class SpawnTest
         return rotation;
     }
 
-    private static Sprocket.PlayerControl.Player FindPlayer()
+    internal static Sprocket.PlayerControl.Player FindPlayer()
     {
         try
         {

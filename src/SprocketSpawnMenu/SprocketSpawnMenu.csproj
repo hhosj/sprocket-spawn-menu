@@ -9,9 +9,9 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-    <Version>0.6.0</Version>
-    <AssemblyVersion>0.6.0.0</AssemblyVersion>
-    <FileVersion>0.6.0.0</FileVersion>
+    <Version>0.7.0</Version>
+    <AssemblyVersion>0.7.0.0</AssemblyVersion>
+    <FileVersion>0.7.0.0</FileVersion>
     <DebugType>none</DebugType>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <!-- The game proxies use obsolete Unity 6000 APIs and the BepInEx packages pull a
@@ -133,6 +133,14 @@
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>$(InteropDir)/UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.Vehicles.Missions">
+      <HintPath>$(InteropDir)/Sprocket.Vehicles.Missions.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Sprocket.MissionFramework">
+      <HintPath>$(InteropDir)/Sprocket.MissionFramework.dll</HintPath>
       <Private>false</Private>
     </Reference>
   </ItemGroup>

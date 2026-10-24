@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0 (experiment/native-spawn)
+- 新增 `UseNativeSpawn`（默认 true）：运行时创建 `VehicleSource`/`VehicleSpawner`/
+  `AimSpawnLocator`/`StageVehicleSpawnEvent`，用游戏原生生命周期生成、注册和清理。
+- `AimSpawnLocator` 通过 ClassInjector 注入，返回准星点。
+- 重置/离场/回编辑器调用 `StageReset`，不再手动 Dispose/摘 AI。
+- 0.6.0 手动路径保留为 `UseNativeSpawn=false`。
+
+
 ## 0.6.0
 - `ClearOnEditorReturn` 默认开启（Dispose → Deregister，与重置战局相同的已验证顺序）。
 - 生成后把本车 CommanderAI 的 `Enabled` 设为 true，AI 立即行动，不再等重置战局。
