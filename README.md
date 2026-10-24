@@ -1,6 +1,12 @@
 # Sprocket Spawn Menu
 
-**一句话：在沙盒模式里用准星直接生成坦克，方便测试 AI、武器和散布。**
+**在沙盒模式里生成坦克。**
+
+**注意！！**
+***第三人称生成坦克的距离存在问题，想要精准的选择坦克生成位置，请使用瞄准镜瞄准***
+
+***本模组只经过简单测试，还处于早期版本***
+***使用deepseek开发，是个AI项目***
 
 *A BepInEx plugin that restores sandbox vehicle spawning in Sprocket: aim, press a key, get a tank.*
 
@@ -10,22 +16,12 @@
 - [`Sprocket.SpawnMenu-0.6.10.zip`](release/Sprocket.SpawnMenu-0.6.10.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
-**直接下载（点开即下）：**
+**直接下载：**
 [`Sprocket.SpawnMenu.dll`](https://github.com/hhosj/sprocket-spawn-menu/raw/main/release/Sprocket.SpawnMenu.dll) ·
 [`Sprocket.SpawnMenu-0.6.10.zip`](https://github.com/hhosj/sprocket-spawn-menu/raw/main/release/Sprocket.SpawnMenu-0.6.10.zip)
 
 > 仓库里的这两个文件就是当前构建产物；版本发布时会同步到右侧 **Releases**。
 
-## 它做了什么
-
-- **仅沙盒可用**：主菜单、任务场景、自定义战斗中禁用热键、面板、生成和探针；只允许在沙盒里用。
-- **准星生成**：从视角中心发射射线，坦克出现在你瞄准的位置；射线会跳过自己的车。
-  没命中（看天空）时退回玩家前方 150 米。
-- **落在地面上**：用射线找到地面，再按车辆渲染包围盒对齐车底；生成后启用物理，不会悬空。
-- **面朝玩家**：车头转向你，方便当靶子。
-- **默认敌方**：队伍 `Team 2` / `Group 1`，生成后注册进游戏载具列表（可配置）。
-- **蓝图面板**：按 `B` 显示，`[` / `]` 切换游戏里所有蓝图（包括 Mod 蓝图）。
-- **自动清场**：回坦克编辑器、重置战局、离开对局时清理本模组生成的车。
 
 ## 安装（Windows，推荐）
 
@@ -35,8 +31,6 @@
    - 国内下载失败时：先用浏览器把 **BepInEx be.788** 和 **Sprocket 兼容补丁** 两个原始 zip 下好放进“下载”文件夹，再点一次按钮（Mod Manager 会自动采用并校验）。
 4. 点 **Add mod** → 选上一步下载的 `Sprocket.SpawnMenu.dll`（或 `.zip`）→ 在列表里**双击**启用。
 5. 点 **Launch**。首次启动慢 1~3 分钟（在生成 interop），之后正常。
-
-> ⚠️ 不要另外再装一套官方 BepInEx。Sprocket 必须用 **be.788 + 社区兼容补丁**，否则启动会黑屏——Mod Manager 的 `Install mod loader` 会处理这件事。
 
 ## 安装（Linux / Steam Deck）
 
@@ -114,19 +108,6 @@ WINEDLLOVERRIDES="winhttp=n,b" %command%
 - 重置战局一两次后，游戏特效可能消失（原生 `StageVehicleSpawnEvent` 方案尚未合并）。
 - 游戏大版本更新后可能失效：本模组会写日志并停用对应功能，不会让游戏崩溃。
 - 适用于 **Sprocket 0.2.55.5**；同时装其他改生成/AI 的模组可能冲突，排查时只留一个。
-
-## 从源码构建
-
-需要 .NET 6 SDK 和游戏的 IL2CPP interop 程序集：
-
-```bash
-export DOTNET_ROOT=/path/to/dotnet6
-export PATH="$DOTNET_ROOT:$PATH"
-./build.sh    # 输出 release/Sprocket.SpawnMenu.dll
-./pack.sh     # 同时生成 zip 和校验值
-```
-
-`InteropDir` 指向游戏的 `BepInEx/interop`，默认路径在 `SprocketSpawnMenu.csproj` 中。
 
 ## 许可 / 致谢
 
