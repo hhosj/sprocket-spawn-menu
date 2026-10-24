@@ -20,7 +20,6 @@
 [`Sprocket.SpawnMenu.dll`](https://github.com/hhosj/sprocket-spawn-menu/raw/main/release/Sprocket.SpawnMenu.dll) ·
 [`Sprocket.SpawnMenu-0.6.10.zip`](https://github.com/hhosj/sprocket-spawn-menu/raw/main/release/Sprocket.SpawnMenu-0.6.10.zip)
 
-> 仓库里的这两个文件就是当前构建产物；版本发布时会同步到右侧 **Releases**。
 
 
 ## 安装（Windows，推荐）
