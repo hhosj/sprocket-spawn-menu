@@ -7,7 +7,7 @@
 ## 下载
 
 - **[`Sprocket.SpawnMenu.dll`](release/Sprocket.SpawnMenu.dll)** ← 单文件，Mod Manager 里 **Add mod** 直接选它
-- [`Sprocket.SpawnMenu-0.6.9.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
+- [`Sprocket.SpawnMenu-0.6.0.zip`](release/Sprocket.SpawnMenu-0.5.0.zip) ← 同样内容，打包形式
 - 校验值：[`release/SHA256SUMS.txt`](release/SHA256SUMS.txt)
 
 > 仓库里的这两个文件就是最新构建产物；以后发版会同步到右侧 **Releases**。
@@ -21,74 +21,6 @@
 - **默认敌方**：队伍 `Team 2`，生成后自动注册进游戏载具列表并启用 AI 行为。
 - **蓝图列表**：按 `B` 显示，`[` / `]` 切换（游戏里所有蓝图，包括 Mod 蓝图）。
 - **自动清场**：按空格回坦克编辑器时，本模组生成过的坦克会被销毁，不会留到下一轮。
-
-## 0.6.9：回退重置清理（优先保证可操控）
-
-0.6.8 的非销毁式重置清理会让载具留在静态 `RotationAxisPhysicsRegister` 里，重置后每帧 NRE、
-无法操控。0.6.9 回退到 `Dispose → Deregister`。
-
-当前取舍：`Dispose` 能清干净静态注册表，但会释放共享特效资源，重置一两次后特效可能消失。
-要同时解决“特效”和“可操控”，需要改成走游戏自己的 `StageVehicleSpawnEvent` 生成流程（0.7），
-不再手动 `Spawn` + `Register`。
-
-## 0.6.8：重置战局不再销毁载具
-
-特效消失出现在“重置一两次后”，指向重置清理里的 `VehicleSpawn.Dispose()` → `factory.Destroy()`：
-它会释放共享特效/烘焙资源。0.6.8 的重置清理改成非销毁式：
-
-1. `VehicleRegister.Deregister(vehicle)`；
-2. `gameObject.SetActive(false)`；
-3. 清空静态 `AIRegister`（`ResetGame` 会自己重建）。
-
-不再调用 `Dispose`/`factory.Destroy`。离开对局（回主菜单）仍然用 Dispose，避免静态注册表留脏。
-
-## 0.6.7：只启用本次新增的 AI
-
-0.6.6 的日志确认 `AttackOrder` 已经每次生成只下一次。剩下的特效嫌疑是：我们仍把 `AIRegister`
-里**所有** AI 都启用，连场上原有靶车也一起唤醒。0.6.7 只处理本次生成新增的那一个 AI
-（`_aiCountBefore` 之后的索引），启用并下发命令，不再触碰其它 AI。
-
-## 0.6.6：修复 AI 启用重试不退出
-
-0.6.5 的日志显示 `AIRegister count=4` 和 `AttackOrder` 每 0.5 秒重复十几次：`EnableAIFor`
-结尾固定 `return 0`，导致重试永不结束、命令被反复下发。重复 `AttackOrder` 很可能就是特效被反复
-重置的原因。0.6.6 返回实际 enabled 数，命令只下一次。
-
-## 0.6.5：去掉 RebuildRegister，缩短 AI 启用延迟
-
-0.6.4 的 `AttackOrder` 已经能让 AI 行动，但有两个副作用：行动有几秒延迟、生成后有概率特效消失。
-怀疑是每次生成都调用 `VehicleRegister.RebuildRegister()`（重建整套载具注册）导致的。
-0.6.5 删掉这个调用，AI 启用重试间隔从 1 秒缩到 0.5 秒；`AttackOrder` 逻辑保留。
-
-## 0.6.4：下发攻击命令
-
-0.6.3 把 `AIRegister` 全部设为 `Enabled=true`，但 AI 仍然待机，说明真正的门槛是**命令**。
-0.6.4 在生成后对新加入 `AIRegister` 的 `CommanderAI` 下发 `AttackOrder`，目标为玩家载具的
-`EntityID`（`Aggressive` + `StopToFire`）。日志：
-
-```
-[spawn] AttackOrder issued to spawned commander (target=Team1).
-```
-
-如果玩家载具的 `EntityID` 取不到，会打 `attack order skipped`。
-
-## 0.6.3：启用整个 AIRegister
-
-0.6.2 的日志是 `AIRegister count=4 enabled=0 matchedByTeam=0`：AI 确实在静态注册表里（4 个：
-3 个靶车 + 我们生成的），但按根节点/队伍匹配都失败。0.6.3 不再匹配，直接把 `AIRegister` 里
-所有 AI 的 `Enabled` 设为 true（它们本来就该启用），我们生成的那一辆必然被包含。
-
-## 0.6.2：生成后重建注册表
-
-重置战局能让生成的车开始行动，说明 `ResetGame` 重建了载具/AI 注册。0.6.2 在每次生成、
-注册车辆之后调用一次 `VehicleRegister.RebuildRegister()`，尝试触发同样的 AI 重建；同时保留
-0.6.1 的每秒重试和 `AIRegister count=` 诊断日志。
-
-## 0.6.1：AI 延迟注册的重试
-
-0.6.0 的日志是 `AI enabled for 0 commander(s)`：生成完成时静态 `AIRegister` 里还没有本车的 AI
-（它要等重置战局才注册）。0.6.1 改成生成后每秒重试，最多 10 次，并打印
-`AIRegister count=N enabled=M`，用来确认是“还没注册”还是“匹配失败”。
 
 ## 0.6.0：回编辑器清理 + 生成即启用 AI
 

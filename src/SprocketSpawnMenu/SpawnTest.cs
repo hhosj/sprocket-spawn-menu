@@ -5,9 +5,6 @@ using Il2CppInterop.Runtime.InteropTypes;
 using Sprocket;
 using Sprocket.Vehicles;
 using Sprocket.Vehicles.Serialization;
-using Sprocket.ArtificialIntelligence;
-using Sprocket.Orders;
-using Sprocket.Vehicles.Control;
 using Sprocket.Vehicles.Spawning;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -32,10 +29,6 @@ internal static class SpawnTest
     private static float _nextTrack;
     private static int _trackSeconds;
     private static float _spawnGroundY;
-    private static int _aiCountBefore = -1;
-    private static readonly List<Transform> PendingAiEnable = new();
-    private static readonly Dictionary<Transform, int> PendingAiAttempts = new();
-    private static float _nextAiCheck;
 
     private static readonly List<VehicleSpawn> Spawned = new();
     private static Sprocket.PlayerControl.Player _player;
@@ -102,7 +95,7 @@ internal static class SpawnTest
                         SnapToGround(root, _spawnGroundY);
                         EnablePhysics(root);
                         StartTracking(result, root);
-                        QueueAIEnable(root);
+                        SetOurAIEnabled(root);
                     }
                 }
 
@@ -203,10 +196,6 @@ internal static class SpawnTest
 
     internal static void CleanupForReset()
     {
-        // Dispose is required here: hiding the objects leaves their entries in the static
-        // RotationAxisPhysicsRegister/AIRegister, which throws every frame after the reset.
-        // This releases shared effect assets (effects can disappear after a reset), but that is
-        // preferable to breaking vehicle control; a proper fix needs the game's own spawn event.
         ClearSpawned("battle reset");
         _register = null;
         _registerCountBefore = -1;
@@ -268,158 +257,49 @@ internal static class SpawnTest
         Log("[cleanup] done");
     }
 
-    private static void QueueAIEnable(Transform root)
-    {
-        if (root == null) return;
-        if (!PendingAiEnable.Contains(root)) PendingAiEnable.Add(root);
-        PendingAiAttempts[root] = 0;
-
-        TryEnablePendingAIs();
-    }
-
-    private static void TryEnablePendingAIs()
-    {
-        if (PendingAiEnable.Count == 0) return;
-
-        var now = Time.realtimeSinceStartup;
-        if (now < _nextAiCheck) return;
-        _nextAiCheck = now + 0.5f;
-
-        for (var i = PendingAiEnable.Count - 1; i >= 0; i--)
-        {
-            var root = PendingAiEnable[i];
-            var attempts = PendingAiAttempts.TryGetValue(root, out var a) ? a : 0;
-
-            var enabled = EnableAIFor(root);
-            attempts++;
-
-            if (enabled > 0)
-            {
-                Log($"[spawn] AI enabled for {enabled} commander(s) after {attempts} attempt(s)");
-                PendingAiEnable.RemoveAt(i);
-                PendingAiAttempts.Remove(root);
-                continue;
-            }
-
-            if (attempts >= 10)
-            {
-                LogWarning("[spawn] gave up enabling AI after 10 attempts - it may only start on battle reset.");
-                PendingAiEnable.RemoveAt(i);
-                PendingAiAttempts.Remove(root);
-                continue;
-            }
-
-            PendingAiAttempts[root] = attempts;
-        }
-    }
-
-    private static int EnableAIFor(Transform vehicleRoot)
+    private static void SetOurAIEnabled(Transform vehicleRoot)
     {
         try
         {
             var registerType = Interop.FindType("Sprocket.ArtificialIntelligence.AIRegister");
-            if (registerType == null) return 0;
+            if (registerType == null) return;
 
             var list = GetAIRegisterList(registerType);
             if (list == null)
             {
                 LogWarning("AIRegister list unavailable; spawned AI may stay idle until reset.");
-                return 0;
+                return;
             }
 
             var listType = list.GetType();
             var countMember = (MemberInfo)listType.GetProperty("Count", Interop.InstanceAny)
                               ?? listType.GetMethod("get_Count", Interop.InstanceAny);
             var itemMethod = listType.GetMethod("get_Item", Interop.InstanceAny);
-            if (countMember == null || itemMethod == null)
-            {
-                LogWarning($"AIRegister list shape unknown (type={listType.FullName}, " +
-                           $"count={countMember != null}, item={itemMethod != null})");
-                return 0;
-            }
+            if (countMember == null || itemMethod == null) return;
 
+            var team = (int)(1 << (SpawnMenuPlugin.CfgTeam.Value - 1));
             var count = (int)ReadMember(countMember, list);
-
-            // Only touch the AI(s) added by this spawn. Enabling every AI in the static registry
-            // also woke up the map's own target AIs, which is the remaining suspect for the
-            // disappearing effects.
-            var firstNew = _aiCountBefore >= 0 ? _aiCountBefore : Math.Max(0, count - 1);
             var enabled = 0;
 
-            for (var i = firstNew; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 var ai = itemMethod.Invoke(list, new object[] { i });
                 if (ai == null) continue;
+                if (!IsOurAI(ai, vehicleRoot) && GetAITeam(ai) != team) continue;
 
-                if (Interop.TrySetValue(ai.GetType(), ai, "Enabled", true)) enabled++;
-                if (ai is Il2CppObjectBase proxy) IssueAttackOrder(proxy);
+                var enabledProperty = ai.GetType().GetProperty("Enabled", Interop.InstanceAny);
+                if (enabledProperty == null || !enabledProperty.CanWrite) continue;
+
+                enabledProperty.SetValue(ai, true);
+                enabled++;
             }
 
-            Log($"[spawn] AIRegister count={count} new={Math.Max(0, count - firstNew)} enabled={enabled}");
-
-            return enabled;
+            Log($"[spawn] AI enabled for {enabled} commander(s) on the spawned vehicle");
         }
         catch (Exception e)
         {
             LogWarning($"enabling spawned AI failed: {e.GetType().Name}: {e.Message}");
-            return 0;
         }
-    }
-
-    private static void IssueAttackOrder(Il2CppObjectBase aiProxy)
-    {
-        try
-        {
-            var commander = aiProxy.TryCast<CommanderAI>();
-            if (commander == null) return;
-
-            if (!TryGetPlayerEntityID(out var target))
-            {
-                LogWarning("attack order skipped: player vehicle EntityID not found.");
-                return;
-            }
-
-            var info = new AttackOrderInfo(target, AttackApproachType.Aggressive,
-                AttackEngageMode.StopToFire, 1f);
-            var order = new AttackOrder(ref info, 128, OrderCancellationType.CancelOnNextOrder);
-            commander.Order(order);
-            Log($"[spawn] AttackOrder issued to spawned commander (target={target.TeamID}).");
-        }
-        catch (Exception e)
-        {
-            LogWarning($"AttackOrder failed: {e.GetType().Name}: {e.Message}");
-        }
-    }
-
-    private static bool TryGetPlayerEntityID(out EntityID id)
-    {
-        id = default;
-
-        try
-        {
-            var controllers = UnityEngine.Object.FindObjectsByType<
-                Sprocket.Gameplay.VehicleControl.VehicleController>(FindObjectsSortMode.None);
-
-            if (controllers == null || controllers.Length == 0) return false;
-
-            if (Interop.TryGetValue(typeof(Sprocket.Gameplay.VehicleControl.VehicleController),
-                    controllers[0], "controlTarget", out var target) &&
-                target is Il2CppObjectBase proxy)
-            {
-                var behaviour = proxy.TryCast<IAIControllableVehicle>();
-                if (behaviour != null)
-                {
-                    id = behaviour.ID;
-                    return true;
-                }
-            }
-        }
-        catch
-        {
-            // ignore
-        }
-
-        return false;
     }
 
     private static int GetAITeam(object ai)
@@ -650,12 +530,6 @@ internal static class SpawnTest
 
     internal static void Track()
     {
-        TrackVehicle();
-        TryEnablePendingAIs();
-    }
-
-    private static void TrackVehicle()
-    {
         if (ReferenceEquals(_trackedTransform, null)) return;
 
         var now = Time.realtimeSinceStartup;
@@ -820,7 +694,6 @@ internal static class SpawnTest
 
             _register = FindVehicleRegister();
             _registerCountBefore = _register?.TotalRegisteredCount ?? -1;
-            _aiCountBefore = CountAIs();
             Log($"vehicle register = {(_register == null ? "<null>" : _register.GetType().Name)} " +
                 $"countBefore={_registerCountBefore}");
 
