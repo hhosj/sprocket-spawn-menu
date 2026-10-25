@@ -20,6 +20,8 @@ public sealed class SpawnMenuUi : MonoBehaviour
     private static bool _visible = false;
     private static bool _created;
 
+    internal static bool IsVisible => _visible;
+
     internal static void Initialize()
     {
         if (_created) return;
@@ -110,7 +112,7 @@ public sealed class SpawnMenuUi : MonoBehaviour
 
             y += 8f;
             GUI.Label(new Rect(x, y, width, 20f),
-                "[ / ] = select    Z = spawn at aim    F9 = probe    B = hide");
+                "[ / ] = select    Z = spawn (panel open)    F9 = probe    B = hide");
         }
         catch (Exception e)
         {

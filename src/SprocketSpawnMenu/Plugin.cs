@@ -23,7 +23,7 @@ public sealed class SpawnMenuPlugin : BasePlugin
 {
     public const string PluginGuid = "sprocket.spawn.menu";
     public const string PluginName = "Sprocket Spawn Menu";
-    public const string PluginVersion = "0.6.11";
+    public const string PluginVersion = "0.6.12";
 
     internal static ManualLogSource Logger;
 
@@ -348,6 +348,19 @@ public sealed class SpawnMenuPlugin : BasePlugin
             Logger.LogInfo($"[key] {key} -> {action}");
         }
 
+        private static bool CtrlHeld()
+        {
+            try
+            {
+                var keyboard = Keyboard.current;
+                return keyboard != null && keyboard.ctrlKey.isPressed;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static void GameModeUpdatePrefix() => Tick();
 
         private static void Tick()
@@ -414,15 +427,20 @@ public sealed class SpawnMenuPlugin : BasePlugin
                     BlueprintLibrary.Cycle(1);
                 }
 
-                var spawnPressed = Hotkey.WasPressed(SpawnMenuPlugin.CfgSpawnKey.Value);
-                var fallbackPressed = !spawnPressed &&
-                                      Hotkey.WasPressed(SpawnMenuPlugin.CfgSpawnFallbackKey.Value);
-                if (spawnPressed || fallbackPressed)
+                // Spawning is only armed while the blueprint panel is open. This keeps Z from
+                // firing during normal driving / Ctrl+Z (editor undo).
+                if (SpawnMenuUi.IsVisible && !CtrlHeld())
                 {
-                    KeyLog(spawnPressed
-                        ? SpawnMenuPlugin.CfgSpawnKey.Value
-                        : SpawnMenuPlugin.CfgSpawnFallbackKey.Value, "spawn");
-                    SpawnTest.TrySpawn();
+                    var spawnPressed = Hotkey.WasPressed(SpawnMenuPlugin.CfgSpawnKey.Value);
+                    var fallbackPressed = !spawnPressed &&
+                                          Hotkey.WasPressed(SpawnMenuPlugin.CfgSpawnFallbackKey.Value);
+                    if (spawnPressed || fallbackPressed)
+                    {
+                        KeyLog(spawnPressed
+                            ? SpawnMenuPlugin.CfgSpawnKey.Value
+                            : SpawnMenuPlugin.CfgSpawnFallbackKey.Value, "spawn");
+                        SpawnTest.TrySpawn();
+                    }
                 }
 
                 if (SpawnMenuPlugin.CfgAutoProbe.Value)

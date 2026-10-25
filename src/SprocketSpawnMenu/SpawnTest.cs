@@ -658,6 +658,12 @@ internal static class SpawnTest
 
     internal static void TrySpawn()
     {
+        if (!SpawnMenuUi.IsVisible)
+        {
+            LogWarning("spawn ignored: open the blueprint panel first.");
+            return;
+        }
+
         if (!SandboxGate.Allowed)
         {
             LogError("spawn menu is sandbox-only; ignoring spawn request.");
